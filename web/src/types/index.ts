@@ -5,6 +5,8 @@ export type {
   FibonacciCard,
   RevealPermission,
   KickPermission,
+  VoteStatistics,
+  VoteDistribution,
 } from "../../../src/types/room.types";
 export type {
   ClientToServerEvents,

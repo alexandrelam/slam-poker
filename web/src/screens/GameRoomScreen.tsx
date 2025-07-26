@@ -266,62 +266,132 @@ export function GameRoomScreen() {
             </Card>
 
             {/* Voting Results (when revealed) */}
-            {room.votesRevealed && (
+            {room.votesRevealed && room.voteStatistics && (
               <Card>
                 <CardHeader>
                   <CardTitle>Voting Results</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {room.users
-                      .filter((user) => user.currentVote)
-                      .sort((a, b) => {
-                        // Sort by vote value, with '?' at the end
-                        if (a.currentVote === "?") return 1;
-                        if (b.currentVote === "?") return -1;
-                        return (
-                          parseInt(a.currentVote!) - parseInt(b.currentVote!)
-                        );
-                      })
-                      .map((user) => (
-                        <div
-                          key={user.id}
-                          className="flex items-center justify-between py-2 px-3 bg-muted rounded"
-                        >
-                          <span className="font-medium">{user.name}</span>
-                          <span className="text-lg font-bold">
-                            {user.currentVote}
-                          </span>
-                        </div>
-                      ))}
+                <CardContent className="space-y-6">
+                  {/* Statistics Summary */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-primary">
+                        {room.voteStatistics.totalVotes}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Total Votes
+                      </div>
+                    </div>
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-primary">
+                        {room.voteStatistics.average !== null
+                          ? room.voteStatistics.average.toFixed(1)
+                          : "N/A"}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Average
+                      </div>
+                    </div>
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-primary">
+                        {room.voteStatistics.median !== null
+                          ? room.voteStatistics.median
+                          : "N/A"}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Median
+                      </div>
+                    </div>
                   </div>
 
+                  <Separator />
+
+                  {/* Vote Distribution */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                      Vote Distribution
+                    </h4>
+                    <div className="space-y-3">
+                      {room.voteStatistics.distribution.map((dist) => (
+                        <div
+                          key={dist.value}
+                          className="space-y-2 p-3 bg-muted rounded-lg"
+                        >
+                          {/* Vote value and count header */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl font-bold text-primary">
+                                {dist.value}
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                ({dist.count} vote{dist.count !== 1 ? "s" : ""})
+                              </span>
+                            </div>
+                            <span className="text-sm font-medium">
+                              {dist.percentage.toFixed(1)}%
+                            </span>
+                          </div>
+
+                          {/* Mini bar chart */}
+                          <div className="w-full bg-background rounded-full h-2 overflow-hidden">
+                            <div
+                              className="h-full bg-primary transition-all duration-300 ease-out"
+                              style={{ width: `${dist.percentage}%` }}
+                            />
+                          </div>
+
+                          {/* Users who voted for this value */}
+                          <div className="flex flex-wrap gap-1">
+                            {dist.users.map((userName) => (
+                              <span
+                                key={userName}
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                              >
+                                {userName}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Non-voting users section */}
                   {(room.users.some((u) => !u.currentVote && u.isOnline) ||
                     room.users.some((u) => !u.isOnline)) && (
-                    <div className="mt-4 pt-3 border-t border-border space-y-2">
-                      {room.users.some((u) => !u.currentVote && u.isOnline) && (
-                        <p className="text-sm text-muted-foreground">
-                          Online users who didn't vote:{" "}
-                          {room.users
-                            .filter((u) => !u.currentVote && u.isOnline)
-                            .map((u) => u.name)
-                            .join(", ")}
-                        </p>
-                      )}
-                      {room.users.some((u) => !u.isOnline) && (
-                        <p className="text-sm text-muted-foreground">
-                          Disconnected users:{" "}
-                          {room.users
-                            .filter((u) => !u.isOnline)
-                            .map(
-                              (u) =>
-                                u.name +
-                                (u.currentVote ? " (voted)" : " (no vote)"),
-                            )
-                            .join(", ")}
-                        </p>
-                      )}
-                    </div>
+                    <>
+                      <Separator />
+                      <div className="space-y-2">
+                        {room.users.some(
+                          (u) => !u.currentVote && u.isOnline,
+                        ) && (
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium">
+                              Online users who didn't vote:
+                            </span>{" "}
+                            {room.users
+                              .filter((u) => !u.currentVote && u.isOnline)
+                              .map((u) => u.name)
+                              .join(", ")}
+                          </p>
+                        )}
+                        {room.users.some((u) => !u.isOnline) && (
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium">
+                              Disconnected users:
+                            </span>{" "}
+                            {room.users
+                              .filter((u) => !u.isOnline)
+                              .map(
+                                (u) =>
+                                  u.name +
+                                  (u.currentVote ? " (voted)" : " (no vote)"),
+                              )
+                              .join(", ")}
+                          </p>
+                        )}
+                      </div>
+                    </>
                   )}
                 </CardContent>
               </Card>

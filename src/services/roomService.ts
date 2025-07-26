@@ -5,6 +5,8 @@ import {
   FIBONACCI_CARDS,
   RevealPermission,
   KickPermission,
+  VoteStatistics,
+  VoteDistribution,
 } from "@/types/room.types";
 import { generateRoomCode } from "@/utils/roomCodeGenerator";
 import userService from "@/services/userService";
@@ -195,7 +197,16 @@ class RoomService {
 
     room.votesRevealed = true;
     room.votingInProgress = false;
-    logger.info("Votes revealed", { roomCode });
+
+    // Compute vote statistics when revealing votes
+    room.voteStatistics = this.computeVoteStatistics(room);
+
+    logger.info("Votes revealed with statistics", {
+      roomCode,
+      totalVotes: room.voteStatistics.totalVotes,
+      average: room.voteStatistics.average,
+      median: room.voteStatistics.median,
+    });
     return room;
   }
 
@@ -208,6 +219,7 @@ class RoomService {
     });
     room.votingInProgress = true;
     room.votesRevealed = false;
+    room.voteStatistics = undefined; // Clear previous statistics
 
     logger.info("Next round started", { roomCode });
     return room;
@@ -364,6 +376,77 @@ class RoomService {
       });
       return null;
     }
+  }
+
+  computeVoteStatistics(room: Room): VoteStatistics {
+    const usersWithVotes = room.users.filter(
+      (u) => u.currentVote !== undefined,
+    );
+    const votes = usersWithVotes.map((u) => u.currentVote!);
+
+    // Create distribution map
+    const distributionMap = new Map<
+      FibonacciCard,
+      { count: number; users: string[] }
+    >();
+
+    usersWithVotes.forEach((user) => {
+      const vote = user.currentVote!;
+      if (!distributionMap.has(vote)) {
+        distributionMap.set(vote, { count: 0, users: [] });
+      }
+      const entry = distributionMap.get(vote)!;
+      entry.count++;
+      entry.users.push(user.name);
+    });
+
+    // Convert to VoteDistribution array
+    const distribution: VoteDistribution[] = Array.from(
+      distributionMap.entries(),
+    )
+      .map(([value, data]) => ({
+        value,
+        count: data.count,
+        users: data.users,
+        percentage: (data.count / usersWithVotes.length) * 100,
+      }))
+      .sort((a, b) => {
+        // Sort by vote value, with '?' at the end
+        const aValue = a.value as string;
+        const bValue = b.value as string;
+        if (aValue === "?") return 1;
+        if (bValue === "?") return -1;
+        return parseInt(aValue) - parseInt(bValue);
+      });
+
+    // Calculate average and median (only for numeric votes)
+    const numericVotes = votes
+      .filter((vote) => vote !== "?")
+      .map((vote) => parseInt(vote))
+      .sort((a, b) => a - b);
+
+    let average: number | null = null;
+    let median: number | null = null;
+
+    if (numericVotes.length > 0) {
+      // Calculate average
+      average =
+        numericVotes.reduce((sum, vote) => sum + vote, 0) / numericVotes.length;
+
+      // Calculate median
+      const mid = Math.floor(numericVotes.length / 2);
+      median =
+        numericVotes.length % 2 === 0
+          ? (numericVotes[mid - 1] + numericVotes[mid]) / 2
+          : numericVotes[mid];
+    }
+
+    return {
+      average,
+      median,
+      distribution,
+      totalVotes: usersWithVotes.length,
+    };
   }
 
   getRoomCount(): number {
