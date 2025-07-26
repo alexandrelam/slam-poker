@@ -2,19 +2,21 @@ import { useState } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Copy, Check, Wifi, WifiOff, AlertCircle } from "lucide-react";
+import { Copy, Check, Wifi, WifiOff, AlertCircle, LogOut } from "lucide-react";
 import { ConnectionStatus } from "../types";
 
 interface RoomHeaderProps {
   roomCode: string;
   connectionStatus: ConnectionStatus;
   className?: string;
+  onLeaveRoom: () => void;
 }
 
 export function RoomHeader({
   roomCode,
   connectionStatus,
   className,
+  onLeaveRoom,
 }: RoomHeaderProps) {
   const [copied, setCopied] = useState(false);
 
@@ -112,8 +114,8 @@ export function RoomHeader({
             </div>
           </div>
 
-          {/* Right side - Connection status */}
-          <div className="flex items-center gap-3">
+          {/* Right side - Connection status and Leave button */}
+          <div className="flex flex-col items-end gap-2">
             <Badge
               variant={getConnectionStatusVariant()}
               className="flex items-center gap-1"
@@ -121,6 +123,15 @@ export function RoomHeader({
               {getConnectionStatusIcon()}
               <span className="text-xs">{getConnectionStatusText()}</span>
             </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onLeaveRoom}
+              className="h-7 px-2 text-xs"
+            >
+              <LogOut className="w-3 h-3 mr-1" />
+              Leave Room
+            </Button>
           </div>
         </div>
 

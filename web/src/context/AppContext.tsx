@@ -98,6 +98,7 @@ interface AppContextType {
     hasUserVoted: () => boolean;
     canRevealVotes: () => boolean;
     canStartNextRound: () => boolean;
+    leaveRoom: () => void;
   };
 }
 
@@ -338,6 +339,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       return false;
+    },
+
+    leaveRoom: () => {
+      try {
+        // Disconnect from socket (this automatically removes user from room on server)
+        socketService.disconnect();
+
+        // Reset app state to return to landing screen
+        dispatch({ type: "SET_SCREEN", payload: AppScreen.LANDING });
+        dispatch({ type: "SET_USER", payload: null });
+        dispatch({ type: "SET_ROOM", payload: null });
+        dispatch({ type: "SET_ERROR", payload: null });
+        dispatch({
+          type: "SET_CONNECTION_STATUS",
+          payload: ConnectionStatus.DISCONNECTED,
+        });
+        dispatch({ type: "SET_LOADING", payload: false });
+      } catch (error) {
+        console.error("Error leaving room:", error);
+        dispatch({ type: "SET_ERROR", payload: "Failed to leave room" });
+      }
     },
   };
 
