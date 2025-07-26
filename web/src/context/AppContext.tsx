@@ -1,4 +1,5 @@
 import { createContext, useContext, useReducer, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import type {
   AppState,
@@ -39,7 +40,9 @@ type AppAction =
     }
   | { type: "VOTES_REVEALED"; payload: { room: Room } }
   | { type: "ROUND_RESET"; payload: { room: Room } }
-  | { type: "ROOM_SETTINGS_UPDATED"; payload: { room: Room } };
+  | { type: "ROOM_SETTINGS_UPDATED"; payload: { room: Room } }
+  | { type: "ROOM_JOIN_FAILED"; payload: string }
+  | { type: "RESET_TO_LANDING" };
 
 // Reducer
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -73,6 +76,20 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case "ROOM_SETTINGS_UPDATED":
       return { ...state, currentRoom: action.payload.room };
 
+    case "ROOM_JOIN_FAILED":
+      return {
+        ...state,
+        error: action.payload,
+        isLoading: false,
+        currentScreen: AppScreen.LANDING,
+      };
+
+    case "RESET_TO_LANDING":
+      return {
+        ...initialState,
+        connectionStatus: state.connectionStatus, // Keep connection status
+      };
+
     default:
       return state;
   }
@@ -99,6 +116,7 @@ interface AppContextType {
     canRevealVotes: () => boolean;
     canStartNextRound: () => boolean;
     leaveRoom: () => void;
+    leaveRoomAndNavigateHome: () => void;
   };
 }
 
@@ -108,6 +126,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 // Context provider
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const navigate = useNavigate();
 
   // Helper functions
   const convertToUIRoom = (room: Room): UIRoom => {
@@ -162,7 +181,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
 
       socketService.on("room-not-found", () => {
-        dispatch({ type: "SET_ERROR", payload: "Room not found" });
+        dispatch({ type: "ROOM_JOIN_FAILED", payload: "Room not found" });
       });
 
       socketService.on("invalid-vote", () => {
@@ -227,6 +246,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             dispatch({ type: "SET_ROOM", payload: data.room });
             dispatch({ type: "SET_SCREEN", payload: AppScreen.ROOM });
             dispatch({ type: "SET_LOADING", payload: false });
+            // Navigate to the room URL
+            navigate(`/${data.room.code}`);
           }
         });
       } catch (error) {
@@ -356,6 +377,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
           payload: ConnectionStatus.DISCONNECTED,
         });
         dispatch({ type: "SET_LOADING", payload: false });
+      } catch (error) {
+        console.error("Error leaving room:", error);
+        dispatch({ type: "SET_ERROR", payload: "Failed to leave room" });
+      }
+    },
+
+    leaveRoomAndNavigateHome: () => {
+      try {
+        // Disconnect from socket (this automatically removes user from room on server)
+        socketService.disconnect();
+
+        // Reset to landing page
+        dispatch({ type: "RESET_TO_LANDING" });
+
+        // Navigate back to home page
+        navigate("/");
       } catch (error) {
         console.error("Error leaving room:", error);
         dispatch({ type: "SET_ERROR", payload: "Failed to leave room" });

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -26,10 +27,12 @@ import { ConnectionStatus } from "../types";
 
 export function LandingScreen() {
   const { state, actions } = useApp();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<"join" | "create">("join");
   const [joinForm, setJoinForm] = useState({ roomCode: "", userName: "" });
   const [createForm, setCreateForm] = useState({ userName: "" });
   const [isVisible, setIsVisible] = useState(false);
+  const [urlError, setUrlError] = useState<string | null>(null);
 
   // Auto-connect to socket when component mounts
   useEffect(() => {
@@ -37,6 +40,18 @@ export function LandingScreen() {
       actions.connectSocket();
     }
   }, [state.connectionStatus, actions]);
+
+  // Handle URL error parameter
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      setUrlError(decodeURIComponent(errorParam));
+      // Clear the error from URL
+      setSearchParams({});
+    } else {
+      setUrlError(null);
+    }
+  }, [searchParams, setSearchParams]);
 
   // Handle smooth entrance animation
   useEffect(() => {
@@ -142,10 +157,10 @@ export function LandingScreen() {
         )}
 
         {/* Error Alert */}
-        {state.error && (
+        {(state.error || urlError) && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{state.error}</AlertDescription>
+            <AlertDescription>{state.error || urlError}</AlertDescription>
           </Alert>
         )}
 

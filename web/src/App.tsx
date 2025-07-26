@@ -1,6 +1,8 @@
+import { Routes, Route } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { LandingScreen } from "./screens/LandingScreen";
+import { DirectJoinScreen } from "./screens/DirectJoinScreen";
 import { GameRoomScreen } from "./screens/GameRoomScreen";
 import { Separator } from "./components/ui/separator";
 import { Github, Heart } from "lucide-react";
@@ -9,11 +11,17 @@ import { AppScreen } from "./types";
 function AppContent() {
   const { state } = useApp();
 
+  // If we're in a room, show the game room screen regardless of URL
+  if (state.currentScreen === AppScreen.ROOM) {
+    return <GameRoomScreen />;
+  }
+
+  // Otherwise, use URL-based routing
   return (
-    <>
-      {state.currentScreen === AppScreen.LANDING && <LandingScreen />}
-      {state.currentScreen === AppScreen.ROOM && <GameRoomScreen />}
-    </>
+    <Routes>
+      <Route path="/" element={<LandingScreen />} />
+      <Route path="/:roomCode" element={<DirectJoinScreen />} />
+    </Routes>
   );
 }
 

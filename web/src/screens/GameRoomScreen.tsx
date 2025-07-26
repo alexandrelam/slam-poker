@@ -77,7 +77,7 @@ export function GameRoomScreen() {
         <RoomHeader
           roomCode={room.code}
           connectionStatus={state.connectionStatus}
-          onLeaveRoom={actions.leaveRoom}
+          onLeaveRoom={actions.leaveRoomAndNavigateHome}
         />
 
         {/* Error Alert */}
