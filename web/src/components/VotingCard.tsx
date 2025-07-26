@@ -100,7 +100,7 @@ export function VotingCard({
         rotateX,
         rotateY,
         rotateZ,
-        scale: 1.4, // Dramatic scale increase to compensate for smaller base size
+        scale: 1.25, // Moderate scale increase for better proportions
         translateZ: 50, // Lift card off surface
       });
     },
