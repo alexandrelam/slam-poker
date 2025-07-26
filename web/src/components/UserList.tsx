@@ -1,8 +1,9 @@
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
-import { CheckCircle, Clock, Crown, User } from "lucide-react";
+import { CheckCircle, Clock, Crown, User, UserX } from "lucide-react";
 import { cn } from "../lib/utils";
 import { RoomSettings } from "./RoomSettings";
 import { NameEditor } from "./NameEditor";
@@ -62,6 +63,20 @@ export function UserList({
     }
 
     return "Waiting...";
+  };
+
+  const canKickUser = (user: UIUser, userIndex: number) => {
+    // Can't kick yourself
+    if (user.id === currentUserId) return false;
+
+    // Can't kick online users
+    if (user.isOnline) return false;
+
+    // Can't kick the host (first user)
+    if (userIndex === 0) return false;
+
+    // Check if current user has permission to kick
+    return actions.canKickDisconnectedUsers();
   };
 
   if (users.length === 0) {
@@ -164,8 +179,23 @@ export function UserList({
                   </p>
                 </div>
 
-                {/* Vote status */}
-                <div className="flex-shrink-0">{getVoteStatusIcon(user)}</div>
+                {/* Vote status and actions */}
+                <div className="flex-shrink-0 flex items-center gap-2">
+                  {getVoteStatusIcon(user)}
+
+                  {/* Kick button for disconnected users */}
+                  {canKickUser(user, index) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => actions.kickUser(user.id)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      title={`Kick ${user.name}`}
+                    >
+                      <UserX className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {/* Separator (except for last item) */}

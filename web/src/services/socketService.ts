@@ -4,6 +4,7 @@ import type {
   ServerToClientEvents,
   FibonacciCard,
   RevealPermission,
+  KickPermission,
 } from "../types";
 import { ConnectionStatus } from "../types";
 
@@ -89,7 +90,10 @@ class SocketService {
     this.socket.emit("next-round");
   }
 
-  updateRoomSettings(settings: { revealPermission: RevealPermission }) {
+  updateRoomSettings(settings: {
+    revealPermission?: RevealPermission;
+    kickPermission?: KickPermission;
+  }) {
     if (!this.socket) throw new Error("Socket not connected");
     this.socket.emit("update-room-settings", settings);
   }
@@ -97,6 +101,11 @@ class SocketService {
   changeName(newName: string) {
     if (!this.socket) throw new Error("Socket not connected");
     this.socket.emit("change-name", { newName });
+  }
+
+  kickUser(userIdToKick: string) {
+    if (!this.socket) throw new Error("Socket not connected");
+    this.socket.emit("kick-user", { userIdToKick });
   }
 
   // Event listener management

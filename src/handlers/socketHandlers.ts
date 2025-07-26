@@ -180,7 +180,7 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
     }
   });
 
-  socket.on("update-room-settings", ({ revealPermission }) => {
+  socket.on("update-room-settings", ({ revealPermission, kickPermission }) => {
     try {
       const { userId, roomCode } = socket.data;
 
@@ -206,6 +206,7 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
 
       const updatedRoom = roomService.updateRoomSettings(roomCode, {
         revealPermission,
+        kickPermission,
       });
       if (!updatedRoom) {
         socket.emit("room-not-found");
@@ -219,10 +220,71 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
         userId,
         roomCode,
         revealPermission,
+        kickPermission,
       });
     } catch (error) {
       logger.error("Error in update-room-settings handler", error as Error);
       socket.emit("error", { message: "Failed to update room settings" });
+    }
+  });
+
+  socket.on("kick-user", ({ userIdToKick }) => {
+    try {
+      const { userId, roomCode } = socket.data;
+
+      if (!userId || !roomCode) {
+        socket.emit("error", { message: "Not joined to any room" });
+        return;
+      }
+
+      if (!userIdToKick) {
+        socket.emit("error", { message: "User ID to kick is required" });
+        return;
+      }
+
+      // Check if user has permission to kick disconnected users
+      if (!roomService.canUserKickDisconnected(roomCode, userId)) {
+        socket.emit("error", {
+          message: "You don't have permission to kick users",
+        });
+        return;
+      }
+
+      // Get user info before kicking for the event
+      const room = roomService.findRoom(roomCode);
+      if (!room) {
+        socket.emit("room-not-found");
+        return;
+      }
+
+      const userToKick = room.users.find((u) => u.id === userIdToKick);
+      if (!userToKick) {
+        socket.emit("error", { message: "User not found in room" });
+        return;
+      }
+
+      const updatedRoom = roomService.kickUser(roomCode, userIdToKick);
+      if (!updatedRoom) {
+        socket.emit("error", { message: "Failed to kick user" });
+        return;
+      }
+
+      io.to(roomCode).emit("user-kicked", {
+        userId: userIdToKick,
+        userName: userToKick.name,
+        room: updatedRoom,
+      });
+
+      logger.info("User kicked via socket", {
+        socketId: socket.id,
+        kickerId: userId,
+        userIdToKick,
+        userName: userToKick.name,
+        roomCode,
+      });
+    } catch (error) {
+      logger.error("Error in kick-user handler", error as Error);
+      socket.emit("error", { message: "Failed to kick user" });
     }
   });
 

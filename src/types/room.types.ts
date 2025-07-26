@@ -6,6 +6,7 @@ export interface User {
 }
 
 export type RevealPermission = "host-only" | "everyone";
+export type KickPermission = "host-only" | "everyone";
 
 export interface Room {
   code: string;
@@ -14,6 +15,7 @@ export interface Room {
   votesRevealed: boolean;
   createdAt: Date;
   revealPermission: RevealPermission;
+  kickPermission: KickPermission;
 }
 
 export const FIBONACCI_CARDS = [

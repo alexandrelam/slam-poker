@@ -4,6 +4,7 @@ import {
   FibonacciCard,
   FIBONACCI_CARDS,
   RevealPermission,
+  KickPermission,
 } from "@/types/room.types";
 import { generateRoomCode } from "@/utils/roomCodeGenerator";
 import userService from "@/services/userService";
@@ -26,6 +27,7 @@ class RoomService {
       votesRevealed: false,
       createdAt: new Date(),
       revealPermission: "host-only",
+      kickPermission: "host-only",
     };
 
     this.rooms.set(roomCode, room);
@@ -183,13 +185,20 @@ class RoomService {
 
   updateRoomSettings(
     roomCode: string,
-    settings: { revealPermission?: RevealPermission },
+    settings: {
+      revealPermission?: RevealPermission;
+      kickPermission?: KickPermission;
+    },
   ): Room | null {
     const room = this.rooms.get(roomCode);
     if (!room) return null;
 
     if (settings.revealPermission) {
       room.revealPermission = settings.revealPermission;
+    }
+
+    if (settings.kickPermission) {
+      room.kickPermission = settings.kickPermission;
     }
 
     logger.info("Room settings updated", { roomCode, settings });
@@ -214,6 +223,53 @@ class RoomService {
   canUserStartNextRound(roomCode: string, userId: string): boolean {
     // Same logic as reveal votes for now
     return this.canUserRevealVotes(roomCode, userId);
+  }
+
+  canUserKickDisconnected(roomCode: string, userId: string): boolean {
+    const room = this.rooms.get(roomCode);
+    if (!room) return false;
+
+    // If permission is set to everyone, any online user can kick
+    if (room.kickPermission === "everyone") {
+      const user = room.users.find((u) => u.id === userId);
+      return user?.isOnline ?? false;
+    }
+
+    // If permission is host-only, only the first user (host) can kick
+    const hostUser = room.users[0];
+    return hostUser?.id === userId && hostUser?.isOnline;
+  }
+
+  kickUser(roomCode: string, userIdToKick: string): Room | null {
+    const room = this.rooms.get(roomCode);
+    if (!room) return null;
+
+    const userIndex = room.users.findIndex((u) => u.id === userIdToKick);
+    if (userIndex < 0) return null;
+
+    const userToKick = room.users[userIndex];
+
+    // Can only kick disconnected users
+    if (userToKick.isOnline) {
+      logger.warn("Attempted to kick online user", { roomCode, userIdToKick });
+      return null;
+    }
+
+    // Cannot kick the host (first user)
+    if (userIndex === 0) {
+      logger.warn("Attempted to kick host user", { roomCode, userIdToKick });
+      return null;
+    }
+
+    // Remove the user from the room completely
+    room.users.splice(userIndex, 1);
+
+    logger.info("User kicked from room", {
+      roomCode,
+      userIdToKick,
+      userName: userToKick.name,
+    });
+    return room;
   }
 
   changeUserName(

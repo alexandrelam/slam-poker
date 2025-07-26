@@ -9,6 +9,7 @@ import type {
   UIRoom,
   UIUser,
   RevealPermission,
+  KickPermission,
 } from "../types";
 import { AppScreen, ConnectionStatus } from "../types";
 import { socketService } from "../services/socketService";
@@ -46,6 +47,10 @@ type AppAction =
       type: "NAME_CHANGED";
       payload: { userId: string; newName: string; room: Room };
     }
+  | {
+      type: "USER_KICKED";
+      payload: { userId: string; userName: string; room: Room };
+    }
   | { type: "SET_NAME_CHANGING"; payload: boolean }
   | { type: "ROOM_JOIN_FAILED"; payload: string }
   | { type: "RESET_TO_LANDING" };
@@ -79,6 +84,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
     case "USER_JOINED":
     case "USER_LEFT":
+    case "USER_KICKED":
     case "VOTE_CAST":
     case "VOTES_REVEALED":
     case "ROUND_RESET":
@@ -134,14 +140,17 @@ interface AppContextType {
     revealVotes: () => void;
     nextRound: () => void;
     updateRoomSettings: (settings: {
-      revealPermission: RevealPermission;
+      revealPermission?: RevealPermission;
+      kickPermission?: KickPermission;
     }) => void;
+    kickUser: (userIdToKick: string) => void;
     changeName: (newName: string) => void;
     getCurrentRoom: () => UIRoom | null;
     isUserFacilitator: () => boolean;
     hasUserVoted: () => boolean;
     canRevealVotes: () => boolean;
     canStartNextRound: () => boolean;
+    canKickDisconnectedUsers: () => boolean;
     isNameChanging: () => boolean;
     leaveRoom: () => void;
     leaveRoomAndNavigateHome: () => void;
@@ -186,6 +195,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       socketService.on("user-left", (data) => {
         dispatch({ type: "USER_LEFT", payload: data });
+      });
+
+      socketService.on("user-kicked", (data) => {
+        dispatch({ type: "USER_KICKED", payload: data });
       });
 
       socketService.on("vote-cast", (data) => {
@@ -320,7 +333,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
 
-    updateRoomSettings: (settings: { revealPermission: RevealPermission }) => {
+    updateRoomSettings: (settings: {
+      revealPermission?: RevealPermission;
+      kickPermission?: KickPermission;
+    }) => {
       try {
         socketService.updateRoomSettings(settings);
       } catch (error) {
@@ -328,6 +344,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           type: "SET_ERROR",
           payload: "Failed to update room settings",
         });
+      }
+    },
+
+    kickUser: (userIdToKick: string) => {
+      try {
+        socketService.kickUser(userIdToKick);
+      } catch (error) {
+        dispatch({ type: "SET_ERROR", payload: "Failed to kick user" });
       }
     },
 
@@ -397,6 +421,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return actions.isUserFacilitator();
       } else if (room.revealPermission === "everyone") {
         // Any online user can start next round
+        const currentUser = room.users.find(
+          (u) => u.id === state.currentUser?.id,
+        );
+        return currentUser?.isOnline ?? false;
+      }
+
+      return false;
+    },
+
+    canKickDisconnectedUsers: (): boolean => {
+      const room = actions.getCurrentRoom();
+      if (!room || !state.currentUser) return false;
+
+      // Check permission based on room settings
+      if (room.kickPermission === "host-only") {
+        // Must be facilitator to kick users
+        return actions.isUserFacilitator();
+      } else if (room.kickPermission === "everyone") {
+        // Any online user can kick disconnected users
         const currentUser = room.users.find(
           (u) => u.id === state.currentUser?.id,
         );

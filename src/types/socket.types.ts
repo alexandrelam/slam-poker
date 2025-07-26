@@ -1,4 +1,10 @@
-import type { User, Room, FibonacciCard, RevealPermission } from "./room.types";
+import type {
+  User,
+  Room,
+  FibonacciCard,
+  RevealPermission,
+  KickPermission,
+} from "./room.types";
 
 export interface ClientToServerEvents {
   "join-room": (data: { roomCode: string; userName: string }) => void;
@@ -6,14 +12,21 @@ export interface ClientToServerEvents {
   "reveal-votes": () => void;
   "next-round": () => void;
   "update-room-settings": (data: {
-    revealPermission: RevealPermission;
+    revealPermission?: RevealPermission;
+    kickPermission?: KickPermission;
   }) => void;
   "change-name": (data: { newName: string }) => void;
+  "kick-user": (data: { userIdToKick: string }) => void;
 }
 
 export interface ServerToClientEvents {
   "user-joined": (data: { user: User; room: Room }) => void;
   "user-left": (data: { userId: string; room: Room }) => void;
+  "user-kicked": (data: {
+    userId: string;
+    userName: string;
+    room: Room;
+  }) => void;
   "vote-cast": (data: {
     userId: string;
     hasVoted: boolean;
