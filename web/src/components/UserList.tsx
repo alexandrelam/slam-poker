@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { CheckCircle, Clock, Crown, User } from "lucide-react";
 import { cn } from "../lib/utils";
+import { RoomSettings } from "./RoomSettings";
 import type { UIUser } from "../types";
 
 interface UserListProps {
@@ -70,105 +71,111 @@ export function UserList({
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="w-5 h-5" />
-          Participants ({users.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {users.map((user, index) => (
-          <div key={user.id}>
-            <div className="flex items-center gap-3">
-              {/* Avatar */}
-              <div className="relative">
-                <Avatar
-                  className={cn(
-                    "w-10 h-10",
-                    user.id === currentUserId &&
-                      "ring-2 ring-primary ring-offset-2",
-                  )}
-                >
-                  <AvatarFallback
+    <div className="space-y-4">
+      {/* Participants Card */}
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            Participants ({users.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {users.map((user, index) => (
+            <div key={user.id}>
+              <div className="flex items-center gap-3">
+                {/* Avatar */}
+                <div className="relative">
+                  <Avatar
                     className={cn(
-                      "font-medium",
-                      !user.isOnline && "opacity-50",
+                      "w-10 h-10",
+                      user.id === currentUserId &&
+                        "ring-2 ring-primary ring-offset-2",
                     )}
                   >
-                    {getInitials(user.name)}
-                  </AvatarFallback>
-                </Avatar>
+                    <AvatarFallback
+                      className={cn(
+                        "font-medium",
+                        !user.isOnline && "opacity-50",
+                      )}
+                    >
+                      {getInitials(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
 
-                {/* Online status indicator */}
-                <div
-                  className={cn(
-                    "absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background",
-                    user.isOnline ? "bg-green-500" : "bg-gray-400",
-                  )}
-                />
-              </div>
-
-              {/* User info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p
+                  {/* Online status indicator */}
+                  <div
                     className={cn(
-                      "font-medium truncate",
-                      !user.isOnline && "opacity-50",
+                      "absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background",
+                      user.isOnline ? "bg-green-500" : "bg-gray-400",
                     )}
-                  >
-                    {user.name}
-                  </p>
-
-                  {/* Badges */}
-                  <div className="flex items-center gap-1">
-                    {user.id === facilitatorId && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Crown className="w-3 h-3 mr-1" />
-                        Host
-                      </Badge>
-                    )}
-
-                    {user.id === currentUserId && (
-                      <Badge variant="outline" className="text-xs">
-                        You
-                      </Badge>
-                    )}
-                  </div>
+                  />
                 </div>
 
-                <p
-                  className={cn(
-                    "text-sm text-muted-foreground",
-                    !user.isOnline && "opacity-50",
-                  )}
-                >
-                  {getStatusText(user)}
-                </p>
+                {/* User info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p
+                      className={cn(
+                        "font-medium truncate",
+                        !user.isOnline && "opacity-50",
+                      )}
+                    >
+                      {user.name}
+                    </p>
+
+                    {/* Badges */}
+                    <div className="flex items-center gap-1">
+                      {user.id === facilitatorId && (
+                        <Badge variant="secondary" className="text-xs">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Host
+                        </Badge>
+                      )}
+
+                      {user.id === currentUserId && (
+                        <Badge variant="outline" className="text-xs">
+                          You
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <p
+                    className={cn(
+                      "text-sm text-muted-foreground",
+                      !user.isOnline && "opacity-50",
+                    )}
+                  >
+                    {getStatusText(user)}
+                  </p>
+                </div>
+
+                {/* Vote status */}
+                <div className="flex-shrink-0">{getVoteStatusIcon(user)}</div>
               </div>
 
-              {/* Vote status */}
-              <div className="flex-shrink-0">{getVoteStatusIcon(user)}</div>
+              {/* Separator (except for last item) */}
+              {index < users.length - 1 && <Separator className="mt-3" />}
             </div>
+          ))}
 
-            {/* Separator (except for last item) */}
-            {index < users.length - 1 && <Separator className="mt-3" />}
+          {/* Summary */}
+          <Separator />
+          <div className="flex justify-between text-sm text-muted-foreground pt-2">
+            <span>
+              Online: {users.filter((u) => u.isOnline).length}/{users.length}
+            </span>
+            <span>
+              Voted: {users.filter((u) => u.hasVoted).length}/
+              {users.filter((u) => u.isOnline).length}
+            </span>
           </div>
-        ))}
+        </CardContent>
+      </Card>
 
-        {/* Summary */}
-        <Separator />
-        <div className="flex justify-between text-sm text-muted-foreground pt-2">
-          <span>
-            Online: {users.filter((u) => u.isOnline).length}/{users.length}
-          </span>
-          <span>
-            Voted: {users.filter((u) => u.hasVoted).length}/
-            {users.filter((u) => u.isOnline).length}
-          </span>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Room Settings */}
+      <RoomSettings />
+    </div>
   );
 }

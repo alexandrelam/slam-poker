@@ -7,6 +7,7 @@ import type {
   FibonacciCard,
   UIRoom,
   UIUser,
+  RevealPermission,
 } from "../types";
 import { AppScreen, ConnectionStatus } from "../types";
 import { socketService } from "../services/socketService";
@@ -37,7 +38,8 @@ type AppAction =
       payload: { userId: string; hasVoted: boolean; room: Room };
     }
   | { type: "VOTES_REVEALED"; payload: { room: Room } }
-  | { type: "ROUND_RESET"; payload: { room: Room } };
+  | { type: "ROUND_RESET"; payload: { room: Room } }
+  | { type: "ROOM_SETTINGS_UPDATED"; payload: { room: Room } };
 
 // Reducer
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -68,6 +70,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case "VOTE_CAST":
     case "VOTES_REVEALED":
     case "ROUND_RESET":
+    case "ROOM_SETTINGS_UPDATED":
       return { ...state, currentRoom: action.payload.room };
 
     default:
@@ -87,10 +90,14 @@ interface AppContextType {
     vote: (vote: FibonacciCard) => void;
     revealVotes: () => void;
     nextRound: () => void;
+    updateRoomSettings: (settings: {
+      revealPermission: RevealPermission;
+    }) => void;
     getCurrentRoom: () => UIRoom | null;
     isUserFacilitator: () => boolean;
     hasUserVoted: () => boolean;
     canRevealVotes: () => boolean;
+    canStartNextRound: () => boolean;
   };
 }
 
@@ -143,6 +150,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       socketService.on("round-reset", (data) => {
         dispatch({ type: "ROUND_RESET", payload: data });
+      });
+
+      socketService.on("room-settings-updated", (data) => {
+        dispatch({ type: "ROOM_SETTINGS_UPDATED", payload: data });
       });
 
       socketService.on("error", (data) => {
@@ -253,6 +264,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
 
+    updateRoomSettings: (settings: { revealPermission: RevealPermission }) => {
+      try {
+        socketService.updateRoomSettings(settings);
+      } catch (error) {
+        dispatch({
+          type: "SET_ERROR",
+          payload: "Failed to update room settings",
+        });
+      }
+    },
+
     getCurrentRoom: (): UIRoom | null => {
       return state.currentRoom ? convertToUIRoom(state.currentRoom) : null;
     },
@@ -268,10 +290,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     canRevealVotes: (): boolean => {
       const room = actions.getCurrentRoom();
-      if (!room) return false;
+      if (!room || !state.currentUser) return false;
 
-      // Must be facilitator to reveal votes
-      if (!actions.isUserFacilitator()) return false;
+      // Check permission based on room settings
+      if (room.revealPermission === "host-only") {
+        // Must be facilitator to reveal votes
+        if (!actions.isUserFacilitator()) return false;
+      } else if (room.revealPermission === "everyone") {
+        // Any online user can reveal votes - just need to be in the room
+        const currentUser = room.users.find(
+          (u) => u.id === state.currentUser?.id,
+        );
+        if (!currentUser?.isOnline) return false;
+      }
 
       // Always allow if votes are already revealed
       if (room.votesRevealed) return true;
@@ -285,6 +316,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Allow if at least one person has voted (emergency case for stuck sessions)
       const votedUsers = room.users.filter((user) => user.hasVoted);
       return votedUsers.length > 0;
+    },
+
+    canStartNextRound: (): boolean => {
+      const room = actions.getCurrentRoom();
+      if (!room || !state.currentUser) return false;
+
+      // Must have votes revealed first
+      if (!room.votesRevealed) return false;
+
+      // Check permission based on room settings (same logic as reveal votes)
+      if (room.revealPermission === "host-only") {
+        // Must be facilitator to start next round
+        return actions.isUserFacilitator();
+      } else if (room.revealPermission === "everyone") {
+        // Any online user can start next round
+        const currentUser = room.users.find(
+          (u) => u.id === state.currentUser?.id,
+        );
+        return currentUser?.isOnline ?? false;
+      }
+
+      return false;
     },
   };
 

@@ -1,5 +1,10 @@
 // Re-export backend types
-export type { User, Room, FibonacciCard } from "../../../src/types/room.types";
+export type {
+  User,
+  Room,
+  FibonacciCard,
+  RevealPermission,
+} from "../../../src/types/room.types";
 export type {
   ClientToServerEvents,
   ServerToClientEvents,

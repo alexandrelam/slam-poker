@@ -3,6 +3,7 @@ import type {
   ClientToServerEvents,
   ServerToClientEvents,
   FibonacciCard,
+  RevealPermission,
 } from "../types";
 import { ConnectionStatus } from "../types";
 
@@ -86,6 +87,11 @@ class SocketService {
     this.socket.emit("next-round");
   }
 
+  updateRoomSettings(settings: { revealPermission: RevealPermission }) {
+    if (!this.socket) throw new Error("Socket not connected");
+    this.socket.emit("update-room-settings", settings);
+  }
+
   // Event listener management
   on<T extends keyof ServerToClientEvents>(
     event: T,
@@ -95,18 +101,18 @@ class SocketService {
 
     // Remove existing listener if any
     if (this.listeners[event]) {
-      this.socket.off(event, this.listeners[event]);
+      this.socket.off(event as any, this.listeners[event] as any);
     }
 
     // Add new listener
-    this.listeners[event] = callback;
-    this.socket.on(event, callback);
+    this.listeners[event] = callback as any;
+    this.socket.on(event as any, callback as any);
   }
 
   // Remove event listener
   off(event: keyof ServerToClientEvents) {
     if (this.socket && this.listeners[event]) {
-      this.socket.off(event, this.listeners[event]);
+      this.socket.off(event as any, this.listeners[event] as any);
       delete this.listeners[event];
     }
   }
@@ -115,7 +121,7 @@ class SocketService {
   removeAllListeners() {
     if (this.socket) {
       Object.keys(this.listeners).forEach((event) => {
-        this.socket!.off(event, this.listeners[event]);
+        this.socket!.off(event as any, this.listeners[event] as any);
       });
       this.listeners = {};
     }

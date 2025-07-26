@@ -35,9 +35,9 @@ export function GameRoomScreen() {
 
   const room = actions.getCurrentRoom();
   const currentUser = state.currentUser;
-  const isUserFacilitator = actions.isUserFacilitator();
   const hasUserVoted = actions.hasUserVoted();
   const canRevealVotes = actions.canRevealVotes();
+  const canStartNextRound = actions.canStartNextRound();
 
   if (!room || !currentUser) {
     return (
@@ -65,7 +65,7 @@ export function GameRoomScreen() {
   };
 
   const handleNextRound = () => {
-    if (isUserFacilitator) {
+    if (canStartNextRound) {
       actions.nextRound();
     }
   };
@@ -187,11 +187,7 @@ export function GameRoomScreen() {
                   {/* Next Round Button */}
                   <Button
                     onClick={handleNextRound}
-                    disabled={
-                      !isUserFacilitator ||
-                      !room.votesRevealed ||
-                      state.isLoading
-                    }
+                    disabled={!canStartNextRound || state.isLoading}
                     variant="secondary"
                     className="flex-1"
                   >
@@ -205,9 +201,11 @@ export function GameRoomScreen() {
                 <div className="text-xs text-muted-foreground space-y-1">
                   {!room.votesRevealed && (
                     <p>
-                      {isUserFacilitator ? (
+                      {canRevealVotes ? (
                         <>
-                          As the host, you can reveal votes when ready.
+                          {room.revealPermission === "host-only"
+                            ? "As the host, you can reveal votes when ready."
+                            : "You can reveal votes when ready."}
                           {room.allOnlineVoted
                             ? " All online users have voted!"
                             : room.users.some((u) => !u.isOnline && u.hasVoted)
@@ -215,15 +213,21 @@ export function GameRoomScreen() {
                               : ""}
                         </>
                       ) : (
-                        "Waiting for host to reveal the votes..."
+                        <>
+                          {room.revealPermission === "host-only"
+                            ? "Waiting for host to reveal the votes..."
+                            : "Waiting for someone to reveal the votes..."}
+                        </>
                       )}
                     </p>
                   )}
                   {room.votesRevealed && (
                     <p>
-                      {isUserFacilitator
+                      {canStartNextRound
                         ? "Click 'Next Round' to clear all votes and start estimating the next item."
-                        : "Waiting for host to start the next round..."}
+                        : room.revealPermission === "host-only"
+                          ? "Waiting for host to start the next round..."
+                          : "Waiting for someone to start the next round..."}
                     </p>
                   )}
                 </div>

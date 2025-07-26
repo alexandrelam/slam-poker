@@ -1,4 +1,10 @@
-import { Room, User, FibonacciCard, FIBONACCI_CARDS } from "@/types/room.types";
+import {
+  Room,
+  User,
+  FibonacciCard,
+  FIBONACCI_CARDS,
+  RevealPermission,
+} from "@/types/room.types";
 import { generateRoomCode } from "@/utils/roomCodeGenerator";
 import logger from "@/utils/logger";
 
@@ -18,6 +24,7 @@ class RoomService {
       votingInProgress: false,
       votesRevealed: false,
       createdAt: new Date(),
+      revealPermission: "host-only",
     };
 
     this.rooms.set(roomCode, room);
@@ -171,6 +178,41 @@ class RoomService {
         logger.info("Cleaned up inactive room", { roomCode: code });
       }
     }
+  }
+
+  updateRoomSettings(
+    roomCode: string,
+    settings: { revealPermission?: RevealPermission },
+  ): Room | null {
+    const room = this.rooms.get(roomCode);
+    if (!room) return null;
+
+    if (settings.revealPermission) {
+      room.revealPermission = settings.revealPermission;
+    }
+
+    logger.info("Room settings updated", { roomCode, settings });
+    return room;
+  }
+
+  canUserRevealVotes(roomCode: string, userId: string): boolean {
+    const room = this.rooms.get(roomCode);
+    if (!room) return false;
+
+    // If permission is set to everyone, any online user can reveal
+    if (room.revealPermission === "everyone") {
+      const user = room.users.find((u) => u.id === userId);
+      return user?.isOnline ?? false;
+    }
+
+    // If permission is host-only, only the first user (host) can reveal
+    const hostUser = room.users[0];
+    return hostUser?.id === userId && hostUser?.isOnline;
+  }
+
+  canUserStartNextRound(roomCode: string, userId: string): boolean {
+    // Same logic as reveal votes for now
+    return this.canUserRevealVotes(roomCode, userId);
   }
 
   getRoomCount(): number {

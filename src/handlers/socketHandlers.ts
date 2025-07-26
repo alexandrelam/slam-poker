@@ -117,6 +117,14 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
         return;
       }
 
+      // Check if user has permission to reveal votes
+      if (!roomService.canUserRevealVotes(roomCode, userId)) {
+        socket.emit("error", {
+          message: "You don't have permission to reveal votes",
+        });
+        return;
+      }
+
       const updatedRoom = roomService.revealVotes(roomCode);
       if (!updatedRoom) {
         socket.emit("room-not-found");
@@ -145,6 +153,14 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
         return;
       }
 
+      // Check if user has permission to start next round
+      if (!roomService.canUserStartNextRound(roomCode, userId)) {
+        socket.emit("error", {
+          message: "You don't have permission to start the next round",
+        });
+        return;
+      }
+
       const updatedRoom = roomService.startNextRound(roomCode);
       if (!updatedRoom) {
         socket.emit("room-not-found");
@@ -161,6 +177,52 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
     } catch (error) {
       logger.error("Error in next-round handler", error as Error);
       socket.emit("error", { message: "Failed to start next round" });
+    }
+  });
+
+  socket.on("update-room-settings", ({ revealPermission }) => {
+    try {
+      const { userId, roomCode } = socket.data;
+
+      if (!userId || !roomCode) {
+        socket.emit("error", { message: "Not joined to any room" });
+        return;
+      }
+
+      // Only the host (first user) can update room settings
+      const room = roomService.findRoom(roomCode);
+      if (!room) {
+        socket.emit("room-not-found");
+        return;
+      }
+
+      const hostUser = room.users[0];
+      if (!hostUser || hostUser.id !== userId) {
+        socket.emit("error", {
+          message: "Only the host can update room settings",
+        });
+        return;
+      }
+
+      const updatedRoom = roomService.updateRoomSettings(roomCode, {
+        revealPermission,
+      });
+      if (!updatedRoom) {
+        socket.emit("room-not-found");
+        return;
+      }
+
+      io.to(roomCode).emit("room-settings-updated", { room: updatedRoom });
+
+      logger.info("Room settings updated via socket", {
+        socketId: socket.id,
+        userId,
+        roomCode,
+        revealPermission,
+      });
+    } catch (error) {
+      logger.error("Error in update-room-settings handler", error as Error);
+      socket.emit("error", { message: "Failed to update room settings" });
     }
   });
 

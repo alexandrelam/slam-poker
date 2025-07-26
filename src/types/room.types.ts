@@ -5,12 +5,15 @@ export interface User {
   isOnline: boolean;
 }
 
+export type RevealPermission = "host-only" | "everyone";
+
 export interface Room {
   code: string;
   users: User[];
   votingInProgress: boolean;
   votesRevealed: boolean;
   createdAt: Date;
+  revealPermission: RevealPermission;
 }
 
 export const FIBONACCI_CARDS = [
