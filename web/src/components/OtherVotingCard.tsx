@@ -145,6 +145,7 @@ export function OtherVotingCard({
         <div
           className={cn("perspective-600", {
             "relative z-50": isHovered && !isDisabled, // Bring hovered card to front
+            "relative z-40": isSelected && isOtherValueSelected && !isRevealed, // Selected cards above others
           })}
           style={{ perspective: "600px" }}
         >
@@ -158,8 +159,8 @@ export function OtherVotingCard({
                 "transition-all duration-100 ease-out": isHovered,
                 "transition-all duration-500 ease-out": !isHovered,
 
-                // Enhanced Selected state - much more prominent
-                "border-4 border-green-500 text-green-800 shadow-xl scale-110 ring-4 ring-green-200/50":
+                // Rainbow selected state with breezing effect
+                "card-selected-rainbow shadow-xl":
                   isSelected && isOtherValueSelected && !isRevealed,
 
                 // Disabled state
@@ -167,7 +168,7 @@ export function OtherVotingCard({
 
                 // Revealed state
                 "bg-muted border-muted-foreground": isRevealed && !isSelected,
-                "border-green-500 text-green-800":
+                "card-selected-rainbow":
                   isRevealed && isSelected && isOtherValueSelected,
 
                 // Holographic hover effect
@@ -205,6 +206,53 @@ export function OtherVotingCard({
                     inset 0 -1px 0 rgba(255, 255, 255, 0.1)
                   `,
                 }),
+              // Subtle rainbow holographic effects for selected cards (reduced opacity for readability)
+              ...(isSelected &&
+                isOtherValueSelected &&
+                !isRevealed && {
+                  background: `
+                    radial-gradient(circle at 50% 50%, 
+                      hsla(${baseHue}deg, 100%, 85%, 0.25) 0%,
+                      hsla(${baseHue + 60}deg, 100%, 80%, 0.2) 25%,
+                      hsla(${baseHue + 120}deg, 95%, 75%, 0.15) 50%,
+                      hsla(${baseHue + 180}deg, 90%, 80%, 0.1) 75%,
+                      transparent 90%
+                    ),
+                    linear-gradient(135deg, 
+                      hsla(${baseHue + 30}deg, 100%, 85%, 0.3),
+                      hsla(${baseHue + 210}deg, 95%, 75%, 0.2)
+                    )
+                  `,
+                  backdropFilter: "blur(0.5px) saturate(1.3)",
+                  border: `4px solid transparent`,
+                  backgroundImage: `
+                    radial-gradient(circle at 50% 50%, 
+                      hsla(${baseHue}deg, 100%, 85%, 0.25) 0%,
+                      hsla(${baseHue + 60}deg, 100%, 80%, 0.2) 25%,
+                      hsla(${baseHue + 120}deg, 95%, 75%, 0.15) 50%,
+                      hsla(${baseHue + 180}deg, 90%, 80%, 0.1) 75%,
+                      transparent 90%
+                    ),
+                    linear-gradient(135deg, 
+                      hsla(${baseHue + 30}deg, 100%, 85%, 0.3),
+                      hsla(${baseHue + 210}deg, 95%, 75%, 0.2)
+                    ),
+                    linear-gradient(45deg, 
+                      hsl(${baseHue}deg, 100%, 60%), 
+                      hsl(${baseHue + 60}deg, 100%, 60%)
+                    )
+                  `,
+                  backgroundOrigin: "border-box",
+                  backgroundClip: "content-box, content-box, border-box",
+                  boxShadow: `
+                    0 0 40px hsla(${baseHue}deg, 100%, 70%, 0.3),
+                    0 0 80px hsla(${baseHue + 120}deg, 100%, 70%, 0.2),
+                    0 8px 32px rgba(255, 255, 255, 0.15),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                    inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+                    0 0 20px hsla(${baseHue}deg, 100%, 60%, 0.6)
+                  `,
+                }),
             }}
             onClick={handleCardClick}
             onMouseEnter={handleMouseEnter}
@@ -214,49 +262,121 @@ export function OtherVotingCard({
             role="button"
             tabIndex={isDisabled ? -1 : 0}
           >
-            <div className="flex flex-col items-center gap-1">
-              {isOtherValueSelected && selectedValue ? (
-                <span
-                  className={cn("text-3xl font-bold transition-colors", {
-                    "text-green-800": isSelected,
-                    "text-muted-foreground": isRevealed && !isSelected,
-                    "text-foreground": !isSelected && !isRevealed,
-                  })}
-                >
-                  {selectedValue}
-                </span>
-              ) : (
-                <>
-                  <MoreHorizontal
-                    className={cn("w-6 h-6 transition-colors", {
-                      "text-green-800": isSelected && isOtherValueSelected,
-                      "text-muted-foreground": isRevealed && !isSelected,
-                      "text-foreground": !isSelected && !isRevealed,
-                    })}
-                  />
-                  <span
-                    className={cn("text-sm font-medium transition-colors", {
-                      "text-green-800": isSelected && isOtherValueSelected,
-                      "text-muted-foreground": isRevealed && !isSelected,
-                      "text-foreground": !isSelected && !isRevealed,
-                    })}
-                  >
-                    Other
-                  </span>
-                </>
+            <div className="relative flex flex-col items-center gap-1">
+              {/* Text backdrop for selected state */}
+              {isSelected && isOtherValueSelected && !isRevealed && (
+                <div
+                  className="absolute top-1/2 left-1/2 w-16 h-16 rounded-full opacity-80 backdrop-blur-sm"
+                  style={{
+                    background: `radial-gradient(circle, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 70%, transparent 100%)`,
+                    transform: "translate(-50%, -50%)",
+                  }}
+                />
               )}
+
+              <div className="relative z-20">
+                {isOtherValueSelected && selectedValue ? (
+                  <span
+                    className={cn(
+                      "text-3xl font-bold transition-all duration-300",
+                      {
+                        "text-white font-extrabold": isSelected && !isRevealed,
+                        "text-muted-foreground": isRevealed && !isSelected,
+                        "text-foreground": !isSelected && !isRevealed,
+                      },
+                    )}
+                    style={{
+                      ...(isSelected &&
+                        isOtherValueSelected &&
+                        !isRevealed && {
+                          textShadow: `
+                          0 2px 4px rgba(0, 0, 0, 0.8),
+                          0 0 8px rgba(0, 0, 0, 0.6),
+                          0 0 16px hsla(${baseHue}deg, 100%, 50%, 0.4)
+                        `,
+                        }),
+                    }}
+                  >
+                    {selectedValue}
+                  </span>
+                ) : (
+                  <>
+                    <MoreHorizontal
+                      className={cn("w-6 h-6 transition-all duration-300", {
+                        "text-white":
+                          isSelected && isOtherValueSelected && !isRevealed,
+                        "text-muted-foreground": isRevealed && !isSelected,
+                        "text-foreground": !isSelected && !isRevealed,
+                      })}
+                      style={{
+                        ...(isSelected &&
+                          isOtherValueSelected &&
+                          !isRevealed && {
+                            filter: `drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 8px hsla(${baseHue}deg, 100%, 50%, 0.4))`,
+                          }),
+                      }}
+                    />
+                    <span
+                      className={cn(
+                        "text-sm font-medium transition-all duration-300",
+                        {
+                          "text-white font-bold":
+                            isSelected && isOtherValueSelected && !isRevealed,
+                          "text-muted-foreground": isRevealed && !isSelected,
+                          "text-foreground": !isSelected && !isRevealed,
+                        },
+                      )}
+                      style={{
+                        ...(isSelected &&
+                          isOtherValueSelected &&
+                          !isRevealed && {
+                            textShadow: `
+                            0 2px 4px rgba(0, 0, 0, 0.8),
+                            0 0 8px rgba(0, 0, 0, 0.6),
+                            0 0 16px hsla(${baseHue}deg, 100%, 50%, 0.4)
+                          `,
+                          }),
+                      }}
+                    >
+                      Other
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
-            {/* Checkmark icon for selected state */}
+            {/* Rainbow checkmark icon for selected state */}
             {isSelected && isOtherValueSelected && !isRevealed && (
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+              <div
+                className="absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-lg animate-bounce"
+                style={{
+                  background: `linear-gradient(45deg, hsl(${baseHue}deg, 100%, 60%), hsl(${baseHue + 60}deg, 100%, 60%))`,
+                  boxShadow: `0 0 20px hsla(${baseHue}deg, 100%, 60%, 0.6)`,
+                }}
+              >
                 <Check className="w-4 h-4 text-white font-bold" />
               </div>
             )}
 
-            {/* Enhanced pulse animation for selected state */}
+            {/* Rainbow breezing overlay for selected state */}
             {isSelected && isOtherValueSelected && !isRevealed && (
-              <div className="absolute inset-0 rounded-md bg-green-100/50 animate-pulse" />
+              <div
+                className="absolute inset-0 rounded-md opacity-15 pointer-events-none"
+                style={{
+                  background: `
+                    conic-gradient(from 0deg at 50% 50%,
+                      hsl(${baseHue + 0}, 100%, 80%) 0deg,
+                      hsl(${baseHue + 60}, 100%, 80%) 60deg,
+                      hsl(${baseHue + 120}, 100%, 80%) 120deg,
+                      hsl(${baseHue + 180}, 100%, 80%) 180deg,
+                      hsl(${baseHue + 240}, 100%, 80%) 240deg,
+                      hsl(${baseHue + 300}, 100%, 80%) 300deg,
+                      hsl(${baseHue + 360}, 100%, 80%) 360deg
+                    )
+                  `,
+                  animation: "rainbow-flow 4s ease-in-out infinite",
+                }}
+              />
             )}
 
             {/* Holographic overlay effect with parallax */}
