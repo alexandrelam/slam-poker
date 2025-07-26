@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { ConnectionStatus } from "../types";
+import { getStoredUsername, saveUsername } from "../lib/userStorage";
 
 export function LandingScreen() {
   const { state, actions } = useApp();
@@ -59,6 +60,15 @@ export function LandingScreen() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Load stored username on mount
+  useEffect(() => {
+    const storedUsername = getStoredUsername();
+    if (storedUsername) {
+      setJoinForm((prev) => ({ ...prev, userName: storedUsername }));
+      setCreateForm((prev) => ({ ...prev, userName: storedUsername }));
+    }
+  }, []);
+
   const handleJoinRoom = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -73,6 +83,7 @@ export function LandingScreen() {
     }
 
     actions.setError(null);
+    saveUsername(joinForm.userName.trim());
     actions.joinRoom(joinForm.roomCode.toUpperCase(), joinForm.userName.trim());
   };
 
@@ -85,6 +96,7 @@ export function LandingScreen() {
     }
 
     actions.setError(null);
+    saveUsername(createForm.userName.trim());
     actions.createRoom(createForm.userName.trim());
   };
 

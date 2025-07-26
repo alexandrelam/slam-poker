@@ -14,6 +14,7 @@ import { Badge } from "../components/ui/badge";
 import { LogIn, Zap, AlertCircle, ArrowLeft } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { ConnectionStatus, AppScreen } from "../types";
+import { getStoredUsername, saveUsername } from "../lib/userStorage";
 // Room code validation (6 characters, alphanumeric uppercase)
 const isValidRoomCode = (code: string): boolean => {
   if (code.length !== 6) return false;
@@ -28,6 +29,7 @@ export function DirectJoinScreen() {
   const [userName, setUserName] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [roomCodeError, setRoomCodeError] = useState<string | null>(null);
+  const [hasAttemptedAutoJoin, setHasAttemptedAutoJoin] = useState(false);
 
   // Auto-connect to socket when component mounts
   useEffect(() => {
@@ -57,6 +59,30 @@ export function DirectJoinScreen() {
     setRoomCodeError(null);
   }, [roomCode]);
 
+  // Auto-join if stored username exists and no room code errors
+  useEffect(() => {
+    if (
+      !hasAttemptedAutoJoin &&
+      !roomCodeError &&
+      roomCode &&
+      state.connectionStatus === ConnectionStatus.CONNECTED
+    ) {
+      const storedUsername = getStoredUsername();
+      if (storedUsername) {
+        setHasAttemptedAutoJoin(true);
+        actions.joinRoom(roomCode.toUpperCase(), storedUsername);
+      } else {
+        setHasAttemptedAutoJoin(true);
+      }
+    }
+  }, [
+    hasAttemptedAutoJoin,
+    roomCodeError,
+    roomCode,
+    state.connectionStatus,
+    actions,
+  ]);
+
   // Navigate to home if room join failed (when app state changes to LANDING)
   useEffect(() => {
     if (state.currentScreen === AppScreen.LANDING && state.error) {
@@ -84,6 +110,7 @@ export function DirectJoinScreen() {
     }
 
     actions.setError(null);
+    saveUsername(userName.trim());
     actions.joinRoom(roomCode.toUpperCase(), userName.trim());
   };
 
@@ -94,6 +121,40 @@ export function DirectJoinScreen() {
   const isConnected = state.connectionStatus === ConnectionStatus.CONNECTED;
   const isConnecting = state.connectionStatus === ConnectionStatus.CONNECTING;
   const hasConnectionError = state.connectionStatus === ConnectionStatus.ERROR;
+
+  // If we haven't attempted auto-join yet and conditions are met, show loading
+  const shouldShowAutoJoinLoading =
+    !hasAttemptedAutoJoin &&
+    !roomCodeError &&
+    roomCode &&
+    isConnected &&
+    getStoredUsername();
+
+  if (shouldShowAutoJoinLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="w-full max-w-lg space-y-8">
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="p-3 rounded-full bg-primary/10">
+                <Zap className="w-10 h-10 text-primary" />
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                SLAM Poker
+              </h1>
+            </div>
+            <p className="text-lg text-muted-foreground">
+              Joining room{" "}
+              <span className="font-mono font-bold text-primary">
+                {roomCode}
+              </span>
+              ...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // If there's a room code error, show it prominently
   if (roomCodeError) {
