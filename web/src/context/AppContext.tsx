@@ -13,6 +13,7 @@ import type {
 } from "../types";
 import { AppScreen, ConnectionStatus } from "../types";
 import { socketService } from "../services/socketService";
+import { getOrCreateUserId } from "../lib/userStorage";
 
 // Initial state
 const initialState: AppState = {
@@ -221,6 +222,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "NAME_CHANGED", payload: data });
       });
 
+      socketService.on("room-state", (data) => {
+        const { room, reason } = data;
+
+        // Handle initial room join/creation
+        if (reason === "initial-join") {
+          // Find current user in the room based on persistent userId
+          const currentUserId = getOrCreateUserId();
+          const currentUser = room.users.find(
+            (u: any) => u.id === currentUserId,
+          );
+
+          if (currentUser) {
+            dispatch({ type: "SET_USER", payload: currentUser });
+            dispatch({ type: "SET_ROOM", payload: room });
+            dispatch({ type: "SET_SCREEN", payload: AppScreen.ROOM });
+            dispatch({ type: "SET_LOADING", payload: false });
+            // Navigate to the room URL
+            navigate(`/${room.code}`);
+          }
+        } else {
+          // Handle state updates for existing room
+          dispatch({ type: "UPDATE_ROOM", payload: room });
+        }
+      });
+
       socketService.on("error", (data) => {
         dispatch({ type: "SET_ERROR", payload: data.message });
         // Clear any pending loading states on error
@@ -285,18 +311,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         dispatch({ type: "SET_LOADING", payload: true });
         socketService.joinRoom(roomCode, userName);
-
-        // Listen for successful join
-        socketService.on("user-joined", (data) => {
-          if (data.user.name === userName) {
-            dispatch({ type: "SET_USER", payload: data.user });
-            dispatch({ type: "SET_ROOM", payload: data.room });
-            dispatch({ type: "SET_SCREEN", payload: AppScreen.ROOM });
-            dispatch({ type: "SET_LOADING", payload: false });
-            // Navigate to the room URL
-            navigate(`/${data.room.code}`);
-          }
-        });
+        // Note: Room joining is now handled by the global room-state event handler
       } catch (error) {
         dispatch({ type: "SET_ERROR", payload: "Failed to join room" });
         dispatch({ type: "SET_LOADING", payload: false });

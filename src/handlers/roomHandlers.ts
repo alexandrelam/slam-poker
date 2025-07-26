@@ -3,8 +3,10 @@ import { RevealPermission, KickPermission } from "@/types/room.types";
 import roomService from "@/services/roomService";
 import userService from "@/services/userService";
 import permissionService from "@/services/permissionService";
+import socketTrackingService from "@/services/socketTrackingService";
 import logger from "@/utils/logger";
 import { SocketErrorHandler } from "@/utils/socketErrors";
+import { RoomStateBroadcaster } from "@/utils/roomStateBroadcast";
 import {
   requireAuthentication,
   requireRoom,
@@ -98,8 +100,8 @@ export const handleJoinRoom = withErrorLogging(
       const existingUser = room.users.find((u) => u.id === userId);
       if (existingUser) {
         if (existingUser.isOnline) {
-          logger.forceWarn(
-            "Join room: DUPLICATE USER BLOCKED - user already online in room",
+          logger.forceInfo(
+            "Join room: DUPLICATE USER DETECTED - disconnecting existing connection",
             {
               socketId: socket.id,
               userId,
@@ -107,20 +109,59 @@ export const handleJoinRoom = withErrorLogging(
               roomCode: room.code,
             },
           );
-          SocketErrorHandler.emitError(
-            socket,
-            "You are already in this room. Please close other tabs or windows.",
-          );
-          return;
-        } else {
-          // User is offline, reconnect them
-          logger.forceInfo("Join room: RECONNECTING offline user", {
-            socketId: socket.id,
+
+          // Disconnect the existing socket connection
+          const disconnected =
+            socketTrackingService.disconnectExistingUserSocket(
+              io,
+              room.code,
+              userId,
+            );
+
+          if (disconnected) {
+            logger.forceInfo(
+              "Join room: existing connection disconnected, proceeding with new connection",
+              {
+                socketId: socket.id,
+                userId,
+                roomCode: room.code,
+              },
+            );
+            // Continue with normal join logic below
+            // The disconnect handler will clean up the existing user
+          } else {
+            logger.forceWarn(
+              "Join room: failed to disconnect existing connection, treating as offline user",
+              {
+                socketId: socket.id,
+                userId,
+                roomCode: room.code,
+              },
+            );
+            // Treat as offline user and continue with reconnection logic
+          }
+        }
+
+        // Handle offline user reconnection or continue after disconnecting existing connection
+        if (
+          !existingUser.isOnline ||
+          socketTrackingService.disconnectExistingUserSocket(
+            io,
+            room.code,
             userId,
-            oldUserName: existingUser.name,
-            newUserName: userName,
-            roomCode: room.code,
-          });
+          )
+        ) {
+          logger.forceInfo(
+            "Join room: RECONNECTING user (was offline or existing connection cleared)",
+            {
+              socketId: socket.id,
+              userId,
+              oldUserName: existingUser.name,
+              newUserName: userName,
+              roomCode: room.code,
+              wasOnline: existingUser.isOnline,
+            },
+          );
 
           // Update user as online and with new name if changed
           existingUser.isOnline = true;
@@ -131,13 +172,23 @@ export const handleJoinRoom = withErrorLogging(
           socket.data.roomCode = room.code;
           socket.data.userName = existingUser.name;
 
+          // Register this socket for the user
+          socketTrackingService.registerUserSocket(
+            room.code,
+            userId,
+            socket.id,
+          );
+
           // Join socket to room
           socket.join(room.code);
 
-          // Emit reconnection events
-          const eventData = { user: existingUser, room };
-          socket.emit("user-joined", eventData);
-          socket.to(room.code).emit("user-joined", eventData);
+          // Send complete room state to reconnecting user
+          RoomStateBroadcaster.sendInitialState(socket, room, true);
+
+          // Notify other users about reconnection
+          socket
+            .to(room.code)
+            .emit("user-joined", { user: existingUser, room });
 
           logger.forceInfo("=== JOIN ROOM HANDLER SUCCESS (RECONNECTION) ===", {
             socketId: socket.id,
@@ -167,6 +218,9 @@ export const handleJoinRoom = withErrorLogging(
     socket.data.userId = user.id;
     socket.data.roomCode = room.code;
     socket.data.userName = user.name;
+
+    // Register this socket for the user
+    socketTrackingService.registerUserSocket(room.code, user.id, socket.id);
 
     logger.forceInfo("Join room: socket data set", {
       socketId: socket.id,
@@ -198,10 +252,16 @@ export const handleJoinRoom = withErrorLogging(
       userIsOnline: updatedRoom.users.find((u) => u.id === user.id)?.isOnline,
     });
 
-    // Emit events
-    const eventData = { user, room: updatedRoom };
-    socket.emit("user-joined", eventData);
-    socket.to(room.code).emit("user-joined", eventData);
+    // Send complete room state to new user
+    RoomStateBroadcaster.sendInitialState(socket, updatedRoom, false);
+
+    // Notify other users about new user and broadcast updated state
+    socket.to(room.code).emit("user-joined", { user, room: updatedRoom });
+    RoomStateBroadcaster.broadcastToRoom(io, room.code, {
+      room: updatedRoom,
+      reason: "user-joined",
+      excludeSocketId: socket.id, // Don't send to the user who just joined (they got initial state)
+    });
 
     logger.forceInfo("=== JOIN ROOM HANDLER SUCCESS ===", {
       socketId: socket.id,
@@ -245,9 +305,19 @@ export const handleUpdateRoomSettings = withErrorLogging(
       return;
     }
 
+    // Broadcast updated room state to all users
+    RoomStateBroadcaster.broadcastStateChange(
+      io,
+      roomCode!,
+      updatedRoom,
+      "settings-updated",
+      { revealPermission, kickPermission },
+    );
+
+    // Also send legacy event for backward compatibility
     io.to(roomCode).emit("room-settings-updated", { room: updatedRoom });
 
-    logger.info("Room settings updated via socket", {
+    logger.forceInfo("Room settings updated via socket", {
       socketId: socket.id,
       userId,
       roomCode,

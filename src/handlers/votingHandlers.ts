@@ -4,6 +4,7 @@ import roomService from "@/services/roomService";
 import permissionService from "@/services/permissionService";
 import logger from "@/utils/logger";
 import { SocketErrorHandler } from "@/utils/socketErrors";
+import { RoomStateBroadcaster } from "@/utils/roomStateBroadcast";
 import {
   requireAuthentication,
   validateVote,
@@ -87,14 +88,21 @@ export const handleVote = withErrorLogging(
       return;
     }
 
-    // Emit to all users in the room
-    const emitData = {
+    // Broadcast updated room state to all users
+    RoomStateBroadcaster.broadcastStateChange(
+      io,
+      roomCode!,
+      updatedRoom,
+      "vote-cast",
+      { userId, hasVoted: true },
+    );
+
+    // Also send legacy event for backward compatibility
+    io.to(roomCode).emit("vote-cast", {
       userId,
       hasVoted: true,
       room: updatedRoom,
-    };
-
-    io.to(roomCode).emit("vote-cast", emitData);
+    });
 
     logger.forceInfo("=== VOTE HANDLER SUCCESS ===", {
       socketId: socket.id,
@@ -132,9 +140,18 @@ export const handleRevealVotes = withErrorLogging(
       return;
     }
 
+    // Broadcast updated room state to all users
+    RoomStateBroadcaster.broadcastStateChange(
+      io,
+      roomCode!,
+      updatedRoom,
+      "votes-revealed",
+    );
+
+    // Also send legacy event for backward compatibility
     io.to(roomCode).emit("votes-revealed", { room: updatedRoom });
 
-    logger.info("Votes revealed via socket", {
+    logger.forceInfo("Votes revealed via socket", {
       socketId: socket.id,
       userId,
       roomCode,
@@ -167,9 +184,18 @@ export const handleNextRound = withErrorLogging(
       return;
     }
 
+    // Broadcast updated room state to all users
+    RoomStateBroadcaster.broadcastStateChange(
+      io,
+      roomCode!,
+      updatedRoom,
+      "round-reset",
+    );
+
+    // Also send legacy event for backward compatibility
     io.to(roomCode).emit("round-reset", { room: updatedRoom });
 
-    logger.info("Next round started via socket", {
+    logger.forceInfo("Next round started via socket", {
       socketId: socket.id,
       userId,
       roomCode,

@@ -25,6 +25,11 @@ export interface ClientToServerEvents {
 }
 
 export interface ServerToClientEvents {
+  "room-state": (data: {
+    room: Room;
+    timestamp: number;
+    reason: string;
+  }) => void;
   "user-joined": (data: { user: User; room: Room }) => void;
   "user-left": (data: { userId: string; room: Room }) => void;
   "user-kicked": (data: {

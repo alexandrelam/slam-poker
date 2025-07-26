@@ -2,8 +2,10 @@ import { SocketType } from "@/types/socket.types";
 import roomService from "@/services/roomService";
 import userService from "@/services/userService";
 import permissionService from "@/services/permissionService";
+import socketTrackingService from "@/services/socketTrackingService";
 import logger from "@/utils/logger";
 import { SocketErrorHandler } from "@/utils/socketErrors";
+import { RoomStateBroadcaster } from "@/utils/roomStateBroadcast";
 import {
   requireAuthentication,
   validateUserName,
@@ -62,13 +64,23 @@ export const handleKickUser = withErrorLogging(
       return;
     }
 
+    // Broadcast updated room state to all users
+    RoomStateBroadcaster.broadcastStateChange(
+      io,
+      roomCode!,
+      updatedRoom,
+      "user-kicked",
+      { userId: userIdToKick, userName: userToKick.name },
+    );
+
+    // Also send legacy event for backward compatibility
     io.to(roomCode).emit("user-kicked", {
       userId: userIdToKick,
       userName: userToKick.name,
       room: updatedRoom,
     });
 
-    logger.info("User kicked via socket", {
+    logger.forceInfo("User kicked via socket", {
       socketId: socket.id,
       kickerId: userId,
       userIdToKick,
@@ -158,14 +170,23 @@ export const handleChangeName = withErrorLogging(
     // Update socket data with new name
     socket.data.userName = userService.sanitizeUserName(newName);
 
-    // Broadcast name change to all room participants (including sender)
+    // Broadcast updated room state to all users
+    RoomStateBroadcaster.broadcastStateChange(
+      io,
+      roomCode!,
+      updatedRoom,
+      "name-changed",
+      { userId, newName: socket.data.userName },
+    );
+
+    // Also send legacy event for backward compatibility
     io.in(roomCode).emit("name-changed", {
       userId,
       newName: socket.data.userName,
       room: updatedRoom,
     });
 
-    logger.info("User name changed successfully via socket", {
+    logger.forceInfo("User name changed successfully via socket", {
       socketId: socket.id,
       userId,
       roomCode,
@@ -177,17 +198,32 @@ export const handleChangeName = withErrorLogging(
 // Disconnect handler
 export const handleDisconnect = withErrorLogging(
   "disconnect",
-  (socket: SocketType, reason: string) => {
+  (socket: SocketType, io: any, reason: string) => {
     const { userId, roomCode } = socket.data;
 
+    // Always clean up socket tracking, even if user data is incomplete
+    socketTrackingService.removeSocketFromAllRooms(socket.id);
+
     if (userId && roomCode) {
+      // Remove user from room
       const updatedRoom = roomService.removeUserFromRoom(roomCode, userId);
 
+      // Also remove from socket tracking specifically for this room/user
+      socketTrackingService.removeUserSocket(roomCode, userId);
+
       if (updatedRoom) {
+        // Broadcast updated room state to remaining users
+        RoomStateBroadcaster.broadcastToRoom(io, roomCode, {
+          room: updatedRoom,
+          reason: "user-disconnected",
+          excludeSocketId: socket.id, // Exclude the disconnecting user
+        });
+
+        // Also send legacy event for backward compatibility
         socket.to(roomCode).emit("user-left", { userId, room: updatedRoom });
       }
 
-      logger.info("User disconnected and removed from room", {
+      logger.forceInfo("User disconnected and removed from room", {
         socketId: socket.id,
         userId,
         roomCode,

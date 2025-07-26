@@ -29,7 +29,7 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
   // User management events
   socket.on("kick-user", (data) => handleKickUser(socket, io, data));
   socket.on("change-name", (data) => handleChangeName(socket, io, data));
-  socket.on("disconnect", (reason) => handleDisconnect(socket, reason));
+  socket.on("disconnect", (reason) => handleDisconnect(socket, io, reason));
 
   logger.info("Socket connection established with modular handlers", {
     socketId: socket.id,
