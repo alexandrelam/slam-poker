@@ -31,6 +31,14 @@ export function DirectJoinScreen() {
   const [roomCodeError, setRoomCodeError] = useState<string | null>(null);
   const [hasAttemptedAutoJoin, setHasAttemptedAutoJoin] = useState(false);
 
+  // Pre-fill username from localStorage if available
+  useEffect(() => {
+    const storedUsername = getStoredUsername();
+    if (storedUsername && !userName) {
+      setUserName(storedUsername);
+    }
+  }, [userName]);
+
   // Auto-connect to socket when component mounts
   useEffect(() => {
     if (state.connectionStatus === ConnectionStatus.DISCONNECTED) {
@@ -68,10 +76,20 @@ export function DirectJoinScreen() {
       state.connectionStatus === ConnectionStatus.CONNECTED
     ) {
       const storedUsername = getStoredUsername();
+      console.log("Auto-join check:", {
+        hasAttemptedAutoJoin,
+        roomCodeError,
+        roomCode,
+        connectionStatus: state.connectionStatus,
+        storedUsername,
+      });
+
       if (storedUsername) {
+        console.log("Auto-joining with stored username:", storedUsername);
         setHasAttemptedAutoJoin(true);
         actions.joinRoom(roomCode.toUpperCase(), storedUsername);
       } else {
+        console.log("No stored username found, showing manual join form");
         setHasAttemptedAutoJoin(true);
       }
     }
@@ -122,13 +140,25 @@ export function DirectJoinScreen() {
   const isConnecting = state.connectionStatus === ConnectionStatus.CONNECTING;
   const hasConnectionError = state.connectionStatus === ConnectionStatus.ERROR;
 
-  // If we haven't attempted auto-join yet and conditions are met, show loading
+  // Show loading until auto-join attempt completes (either success or failure)
+  const storedUsername = getStoredUsername();
   const shouldShowAutoJoinLoading =
-    !hasAttemptedAutoJoin &&
+    (!hasAttemptedAutoJoin || (state.isLoading && hasAttemptedAutoJoin)) &&
     !roomCodeError &&
     roomCode &&
     isConnected &&
-    getStoredUsername();
+    storedUsername;
+
+  console.log("Loading decision:", {
+    hasAttemptedAutoJoin,
+    isLoading: state.isLoading,
+    roomCodeError,
+    roomCode,
+    isConnected,
+    storedUsername,
+    shouldShowAutoJoinLoading,
+    currentScreen: state.currentScreen,
+  });
 
   if (shouldShowAutoJoinLoading) {
     return (
