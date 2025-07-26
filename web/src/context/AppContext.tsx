@@ -61,12 +61,14 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, currentRoom: action.payload };
 
     case "UPDATE_ROOM":
+      return { ...state, currentRoom: action.payload };
+
     case "USER_JOINED":
     case "USER_LEFT":
     case "VOTE_CAST":
     case "VOTES_REVEALED":
     case "ROUND_RESET":
-      return { ...state, currentRoom: action.payload.room || action.payload };
+      return { ...state, currentRoom: action.payload.room };
 
     default:
       return state;
@@ -106,10 +108,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hasVoted: !!user.currentVote,
     }));
 
+    const onlineUsers = uiUsers.filter((user) => user.isOnline);
+    const allUsersVoted = uiUsers.every((user) => user.hasVoted);
+    const allOnlineUsersVoted =
+      onlineUsers.length > 0 && onlineUsers.every((user) => user.hasVoted);
+
     return {
       ...room,
       users: uiUsers,
-      allVoted: uiUsers.every((user) => user.hasVoted),
+      allVoted: allUsersVoted,
+      allOnlineVoted: allOnlineUsersVoted,
       facilitatorId: uiUsers[0]?.id, // First user is facilitator
     };
   };
@@ -262,9 +270,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const room = actions.getCurrentRoom();
       if (!room) return false;
 
-      return (
-        actions.isUserFacilitator() && (room.allVoted || room.votesRevealed)
-      );
+      // Must be facilitator to reveal votes
+      if (!actions.isUserFacilitator()) return false;
+
+      // Always allow if votes are already revealed
+      if (room.votesRevealed) return true;
+
+      // Allow if all online users have voted (handles disconnections gracefully)
+      if (room.allOnlineVoted) return true;
+
+      // Allow if all users (including offline) have voted
+      if (room.allVoted) return true;
+
+      // Allow if at least one person has voted (emergency case for stuck sessions)
+      const votedUsers = room.users.filter((user) => user.hasVoted);
+      return votedUsers.length > 0;
     },
   };
 

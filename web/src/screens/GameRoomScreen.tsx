@@ -127,10 +127,22 @@ export function GameRoomScreen() {
                         ? "You have voted - waiting for others"
                         : "Select a card to vote"}
                   </span>
-                  <span className="text-muted-foreground">
-                    {room.users.filter((u) => u.hasVoted).length} /{" "}
-                    {room.users.filter((u) => u.isOnline).length} voted
-                  </span>
+                  <div className="text-muted-foreground text-right">
+                    <div>
+                      {room.users.filter((u) => u.hasVoted).length} /{" "}
+                      {room.users.filter((u) => u.isOnline).length} online voted
+                    </div>
+                    {room.users.some((u) => !u.isOnline && u.hasVoted) && (
+                      <div className="text-xs opacity-75">
+                        +
+                        {
+                          room.users.filter((u) => !u.isOnline && u.hasVoted)
+                            .length
+                        }{" "}
+                        offline with votes
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
 
@@ -193,9 +205,18 @@ export function GameRoomScreen() {
                 <div className="text-xs text-muted-foreground space-y-1">
                   {!room.votesRevealed && (
                     <p>
-                      {isUserFacilitator
-                        ? "As the host, you can reveal votes when ready or when everyone has voted."
-                        : "Waiting for host to reveal the votes..."}
+                      {isUserFacilitator ? (
+                        <>
+                          As the host, you can reveal votes when ready.
+                          {room.allOnlineVoted
+                            ? " All online users have voted!"
+                            : room.users.some((u) => !u.isOnline && u.hasVoted)
+                              ? " Some users disconnected but their votes are preserved."
+                              : ""}
+                        </>
+                      ) : (
+                        "Waiting for host to reveal the votes..."
+                      )}
                     </p>
                   )}
                   {room.votesRevealed && (
@@ -240,15 +261,31 @@ export function GameRoomScreen() {
                       ))}
                   </div>
 
-                  {room.users.some((u) => !u.currentVote && u.isOnline) && (
-                    <div className="mt-4 pt-3 border-t border-border">
-                      <p className="text-sm text-muted-foreground">
-                        Users who didn't vote:{" "}
-                        {room.users
-                          .filter((u) => !u.currentVote && u.isOnline)
-                          .map((u) => u.name)
-                          .join(", ")}
-                      </p>
+                  {(room.users.some((u) => !u.currentVote && u.isOnline) ||
+                    room.users.some((u) => !u.isOnline)) && (
+                    <div className="mt-4 pt-3 border-t border-border space-y-2">
+                      {room.users.some((u) => !u.currentVote && u.isOnline) && (
+                        <p className="text-sm text-muted-foreground">
+                          Online users who didn't vote:{" "}
+                          {room.users
+                            .filter((u) => !u.currentVote && u.isOnline)
+                            .map((u) => u.name)
+                            .join(", ")}
+                        </p>
+                      )}
+                      {room.users.some((u) => !u.isOnline) && (
+                        <p className="text-sm text-muted-foreground">
+                          Disconnected users:{" "}
+                          {room.users
+                            .filter((u) => !u.isOnline)
+                            .map(
+                              (u) =>
+                                u.name +
+                                (u.currentVote ? " (voted)" : " (no vote)"),
+                            )
+                            .join(", ")}
+                        </p>
+                      )}
                     </div>
                   )}
                 </CardContent>

@@ -1,4 +1,4 @@
-import { User, Room, FibonacciCard } from "./room.types";
+import type { User, Room, FibonacciCard } from "./room.types";
 
 export interface ClientToServerEvents {
   "join-room": (data: { roomCode: string; userName: string }) => void;

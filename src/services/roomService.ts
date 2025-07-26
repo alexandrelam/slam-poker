@@ -54,8 +54,9 @@ class RoomService {
 
     const userIndex = room.users.findIndex((u) => u.id === userId);
     if (userIndex >= 0) {
+      // Mark user as offline but preserve their vote if they had one
       room.users[userIndex].isOnline = false;
-      room.users[userIndex].currentVote = undefined;
+      // Note: We no longer clear currentVote to allow vote revelation even after disconnect
     }
 
     if (room.users.every((u) => !u.isOnline)) {
@@ -111,10 +112,39 @@ class RoomService {
 
   hasAllUsersVoted(room: Room): boolean {
     const onlineUsers = room.users.filter((u) => u.isOnline);
-    return (
-      onlineUsers.length > 0 &&
-      onlineUsers.every((u) => u.currentVote !== undefined)
+    const allUsers = room.users;
+
+    // No online users means no active voting session
+    if (onlineUsers.length === 0) return false;
+
+    // If all online users have voted, we can reveal
+    const allOnlineUsersVoted = onlineUsers.every(
+      (u) => u.currentVote !== undefined,
     );
+
+    // Or if all users (including offline ones) who ever joined have voted
+    const allUsersVoted = allUsers.every((u) => u.currentVote !== undefined);
+
+    return allOnlineUsersVoted || allUsersVoted;
+  }
+
+  canForceRevealVotes(room: Room): boolean {
+    const onlineUsers = room.users.filter((u) => u.isOnline);
+    const allUsers = room.users;
+    const votedUsers = allUsers.filter((u) => u.currentVote !== undefined);
+
+    // No users means no voting
+    if (allUsers.length === 0) return false;
+
+    // Always allow if votes are already revealed
+    if (room.votesRevealed) return true;
+
+    // Allow if at least one user has voted (emergency case)
+    if (votedUsers.length > 0) return true;
+
+    // Allow if we have reasonable participation (at least 50% of total users voted)
+    const participationRate = votedUsers.length / allUsers.length;
+    return participationRate >= 0.5;
   }
 
   getVotingProgress(room: Room): { totalUsers: number; votedUsers: number } {

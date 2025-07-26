@@ -61,5 +61,6 @@ export interface UIUser extends User {
 export interface UIRoom extends Room {
   users: UIUser[];
   allVoted: boolean;
+  allOnlineVoted: boolean; // true if all currently online users have voted
   facilitatorId?: string; // first user to join is facilitator
 }
