@@ -23,8 +23,10 @@ class SocketService {
 
       this.connectionStatus = ConnectionStatus.CONNECTING;
 
-      // Connect to the backend server (assuming it runs on port 3001)
-      this.socket = io("http://localhost:3001", {
+      // Get websocket URL from environment or use current origin
+      const wsUrl = import.meta.env.VITE_WS_URL || window.location.origin;
+
+      this.socket = io(wsUrl, {
         autoConnect: true,
         reconnection: true,
         reconnectionAttempts: 5,

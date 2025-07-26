@@ -45,6 +45,8 @@ A real-time poker planning application for agile teams built with Node.js, TypeS
 
 The application can be configured using environment variables:
 
+#### Backend Configuration (.env)
+
 | Variable      | Default      | Description                  |
 | ------------- | ------------ | ---------------------------- |
 | `PORT`        | `3001`       | Port the application runs on |
@@ -58,6 +60,26 @@ PORT=3001
 NODE_ENV=production
 CORS_ORIGIN=http://localhost:3000
 ```
+
+#### Frontend Configuration
+
+The frontend requires WebSocket URL configuration for different environments:
+
+**For Development (`web/.env.development`):**
+```env
+VITE_WS_URL=http://localhost:3001
+```
+
+**For Production (`web/.env.production`):**
+```env
+# Leave empty to use same origin as frontend (recommended for production)
+VITE_WS_URL=
+```
+
+The frontend will automatically:
+- Use `VITE_WS_URL` if specified
+- Fall back to `window.location.origin` (same server as frontend) if not specified
+- This ensures WebSocket connections work in both development and production environments
 
 ### Development
 
