@@ -212,16 +212,24 @@ export function OtherVotingCard({
                 !isRevealed && {
                   backdropFilter: "blur(0.5px) saturate(1.3)",
                   background: `
-                    radial-gradient(circle at 50% 50%, 
-                      hsla(${baseHue}deg, 100%, 85%, 0.25) 0%,
-                      hsla(${baseHue + 60}deg, 100%, 80%, 0.2) 25%,
-                      hsla(${baseHue + 120}deg, 95%, 75%, 0.15) 50%,
-                      hsla(${baseHue + 180}deg, 90%, 80%, 0.1) 75%,
-                      transparent 90%
+                    radial-gradient(circle at 30% 30%, 
+                      hsla(${baseHue}deg, 100%, 85%, 0.6) 0%,
+                      hsla(${baseHue + 60}deg, 100%, 80%, 0.5) 25%,
+                      hsla(${baseHue + 120}deg, 95%, 75%, 0.4) 50%,
+                      hsla(${baseHue + 180}deg, 90%, 80%, 0.3) 75%,
+                      hsla(${baseHue + 240}deg, 95%, 85%, 0.2) 100%
+                    ),
+                    radial-gradient(circle at 70% 70%, 
+                      hsla(${baseHue + 180}deg, 100%, 85%, 0.5) 0%,
+                      hsla(${baseHue + 240}deg, 100%, 80%, 0.4) 30%,
+                      hsla(${baseHue + 300}deg, 95%, 75%, 0.3) 60%,
+                      transparent 100%
                     ),
                     linear-gradient(135deg, 
-                      hsla(${baseHue + 30}deg, 100%, 85%, 0.3),
-                      hsla(${baseHue + 210}deg, 95%, 75%, 0.2)
+                      hsla(${baseHue + 30}deg, 100%, 85%, 0.4),
+                      hsla(${baseHue + 120}deg, 95%, 80%, 0.3),
+                      hsla(${baseHue + 210}deg, 95%, 75%, 0.3),
+                      hsla(${baseHue + 300}deg, 100%, 80%, 0.2)
                     )
                   `,
                   border: `4px solid hsl(${baseHue}deg, 100%, 60%)`,
