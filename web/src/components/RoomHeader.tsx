@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Copy, Check, Wifi, WifiOff, AlertCircle, LogOut } from "lucide-react";
 import { ConnectionStatus } from "../types";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface RoomHeaderProps {
   roomCode: string;
@@ -114,15 +115,18 @@ export function RoomHeader({
             </div>
           </div>
 
-          {/* Right side - Connection status and Leave button */}
+          {/* Right side - Theme toggle, Connection status and Leave button */}
           <div className="flex flex-col items-end gap-2">
-            <Badge
-              variant={getConnectionStatusVariant()}
-              className="flex items-center gap-1"
-            >
-              {getConnectionStatusIcon()}
-              <span className="text-xs">{getConnectionStatusText()}</span>
-            </Badge>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Badge
+                variant={getConnectionStatusVariant()}
+                className="flex items-center gap-1"
+              >
+                {getConnectionStatusIcon()}
+                <span className="text-xs">{getConnectionStatusText()}</span>
+              </Badge>
+            </div>
             <Button
               variant="outline"
               size="sm"
