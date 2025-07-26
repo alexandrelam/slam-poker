@@ -53,7 +53,7 @@ export function GameRoomScreen() {
   }
 
   const handleVote = (vote: FibonacciCard) => {
-    if (!room.votingInProgress && !room.votesRevealed) {
+    if (!room.votesRevealed) {
       actions.vote(vote);
     }
   };
