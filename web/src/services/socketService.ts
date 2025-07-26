@@ -1,0 +1,127 @@
+import { io, Socket } from "socket.io-client";
+import type {
+  ClientToServerEvents,
+  ServerToClientEvents,
+  FibonacciCard,
+} from "../types";
+import { ConnectionStatus } from "../types";
+
+class SocketService {
+  private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null =
+    null;
+  private connectionStatus: ConnectionStatus = ConnectionStatus.DISCONNECTED;
+  private listeners: { [event: string]: (...args: any[]) => void } = {};
+
+  // Initialize connection
+  connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (this.socket?.connected) {
+        resolve();
+        return;
+      }
+
+      this.connectionStatus = ConnectionStatus.CONNECTING;
+
+      // Connect to the backend server (assuming it runs on port 3001)
+      this.socket = io("http://localhost:3001", {
+        autoConnect: true,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+      });
+
+      this.socket.on("connect", () => {
+        this.connectionStatus = ConnectionStatus.CONNECTED;
+        resolve();
+      });
+
+      this.socket.on("connect_error", (error) => {
+        this.connectionStatus = ConnectionStatus.ERROR;
+        reject(error);
+      });
+
+      this.socket.on("disconnect", () => {
+        this.connectionStatus = ConnectionStatus.DISCONNECTED;
+      });
+    });
+  }
+
+  // Disconnect from server
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+      this.connectionStatus = ConnectionStatus.DISCONNECTED;
+    }
+  }
+
+  // Get current connection status
+  getConnectionStatus(): ConnectionStatus {
+    return this.connectionStatus;
+  }
+
+  // Check if connected
+  isConnected(): boolean {
+    return this.socket?.connected ?? false;
+  }
+
+  // Event emission methods
+  joinRoom(roomCode: string, userName: string) {
+    if (!this.socket) throw new Error("Socket not connected");
+    this.socket.emit("join-room", { roomCode, userName });
+  }
+
+  vote(vote: FibonacciCard) {
+    if (!this.socket) throw new Error("Socket not connected");
+    this.socket.emit("vote", { vote });
+  }
+
+  revealVotes() {
+    if (!this.socket) throw new Error("Socket not connected");
+    this.socket.emit("reveal-votes");
+  }
+
+  nextRound() {
+    if (!this.socket) throw new Error("Socket not connected");
+    this.socket.emit("next-round");
+  }
+
+  // Event listener management
+  on<T extends keyof ServerToClientEvents>(
+    event: T,
+    callback: ServerToClientEvents[T],
+  ) {
+    if (!this.socket) throw new Error("Socket not connected");
+
+    // Remove existing listener if any
+    if (this.listeners[event]) {
+      this.socket.off(event, this.listeners[event]);
+    }
+
+    // Add new listener
+    this.listeners[event] = callback;
+    this.socket.on(event, callback);
+  }
+
+  // Remove event listener
+  off(event: keyof ServerToClientEvents) {
+    if (this.socket && this.listeners[event]) {
+      this.socket.off(event, this.listeners[event]);
+      delete this.listeners[event];
+    }
+  }
+
+  // Remove all listeners
+  removeAllListeners() {
+    if (this.socket) {
+      Object.keys(this.listeners).forEach((event) => {
+        this.socket!.off(event, this.listeners[event]);
+      });
+      this.listeners = {};
+    }
+  }
+}
+
+// Export singleton instance
+export const socketService = new SocketService();
+export default socketService;
