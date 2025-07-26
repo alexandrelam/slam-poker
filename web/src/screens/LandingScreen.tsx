@@ -10,7 +10,17 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { Badge } from "../components/ui/badge";
-import { Users, Plus, LogIn, Zap, AlertCircle } from "lucide-react";
+import {
+  Users,
+  Plus,
+  LogIn,
+  Zap,
+  AlertCircle,
+  Vote,
+  Target,
+  UserCheck,
+  Rocket,
+} from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { ConnectionStatus } from "../types";
 
@@ -61,18 +71,22 @@ export function LandingScreen() {
   const hasConnectionError = state.connectionStatus === ConnectionStatus.ERROR;
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="w-full max-w-lg space-y-8">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Zap className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold">SLAM Poker</h1>
+        <div className="text-center space-y-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-700">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="p-3 rounded-full bg-primary/10 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-200">
+              <Zap className="w-10 h-10 text-primary" />
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent animate-in fade-in-0 slide-in-from-right-4 duration-500 delay-300">
+              SLAM Poker
+            </h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-lg text-muted-foreground max-w-md mx-auto">
             Simple, fast agile planning for your team
           </p>
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-2 pt-2">
             <Badge
               variant={
                 isConnected
@@ -81,6 +95,9 @@ export function LandingScreen() {
                     ? "destructive"
                     : "secondary"
               }
+              className={`px-3 py-1 text-sm transition-all duration-300 ${
+                isConnecting ? "animate-pulse" : ""
+              }`}
             >
               {isConnecting && "Connecting..."}
               {isConnected && "Connected"}
@@ -120,14 +137,14 @@ export function LandingScreen() {
         )}
 
         {/* Main Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex space-x-1">
+        <Card className="border-2 border-border/50 shadow-lg backdrop-blur-sm animate-in fade-in-0 slide-in-from-bottom-6 duration-500 delay-500">
+          <CardHeader className="pb-6">
+            <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
               <Button
                 variant={activeTab === "join" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setActiveTab("join")}
-                className="flex-1"
+                className={`transition-all duration-200 ${activeTab === "join" ? "shadow-sm" : "hover:bg-background/50"}`}
               >
                 <LogIn className="w-4 h-4 mr-2" />
                 Join Room
@@ -136,7 +153,7 @@ export function LandingScreen() {
                 variant={activeTab === "create" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setActiveTab("create")}
-                className="flex-1"
+                className={`transition-all duration-200 ${activeTab === "create" ? "shadow-sm" : "hover:bg-background/50"}`}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Room
@@ -144,13 +161,13 @@ export function LandingScreen() {
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6 pt-0">
             {activeTab === "join" ? (
               <>
-                <CardDescription>
+                <CardDescription className="text-center text-base">
                   Enter the room code shared by your team
                 </CardDescription>
-                <form onSubmit={handleJoinRoom} className="space-y-4">
+                <form onSubmit={handleJoinRoom} className="space-y-5">
                   <div className="space-y-2">
                     <label htmlFor="roomCode" className="text-sm font-medium">
                       Room Code
@@ -165,7 +182,7 @@ export function LandingScreen() {
                           roomCode: e.target.value.toUpperCase().slice(0, 6),
                         }))
                       }
-                      className="font-mono text-center text-lg tracking-widest"
+                      className="font-mono text-center text-xl tracking-[0.25em] h-12 bg-muted/50 border-2 focus:border-primary transition-colors"
                       maxLength={6}
                       disabled={!isConnected || state.isLoading}
                     />
@@ -188,13 +205,16 @@ export function LandingScreen() {
                           userName: e.target.value,
                         }))
                       }
+                      className="h-11 bg-muted/50 border-2 focus:border-primary transition-colors"
                       disabled={!isConnected || state.isLoading}
                     />
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full"
+                    className={`w-full h-11 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-200 ${
+                      state.isLoading ? "animate-pulse" : ""
+                    }`}
                     disabled={!isConnected || state.isLoading}
                   >
                     {state.isLoading ? "Joining..." : "Join Room"}
@@ -203,10 +223,10 @@ export function LandingScreen() {
               </>
             ) : (
               <>
-                <CardDescription>
+                <CardDescription className="text-center text-base">
                   Create a new poker planning session
                 </CardDescription>
-                <form onSubmit={handleCreateRoom} className="space-y-4">
+                <form onSubmit={handleCreateRoom} className="space-y-5">
                   <div className="space-y-2">
                     <label
                       htmlFor="createUserName"
@@ -224,13 +244,16 @@ export function LandingScreen() {
                           userName: e.target.value,
                         }))
                       }
+                      className="h-11 bg-muted/50 border-2 focus:border-primary transition-colors"
                       disabled={!isConnected || state.isLoading}
                     />
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full"
+                    className={`w-full h-11 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-200 ${
+                      state.isLoading ? "animate-pulse" : ""
+                    }`}
                     disabled={!isConnected || state.isLoading}
                   >
                     {state.isLoading ? "Creating..." : "Create Room"}
@@ -242,19 +265,47 @@ export function LandingScreen() {
         </Card>
 
         {/* Features */}
-        <Card>
+        <Card className="animate-in fade-in-0 slide-in-from-bottom-8 duration-500 delay-700">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="w-5 h-5" />
               Features
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
-              <div>✨ Real-time collaborative voting</div>
-              <div>🎯 Fibonacci sequence estimation</div>
-              <div>👥 Up to 10 participants per room</div>
-              <div>🚀 No registration required</div>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 transition-colors hover:bg-muted/50">
+                <div className="p-2 rounded-full bg-primary/10">
+                  <Vote className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-sm font-medium">
+                  Real-time collaborative voting
+                </span>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 transition-colors hover:bg-muted/50">
+                <div className="p-2 rounded-full bg-primary/10">
+                  <Target className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-sm font-medium">
+                  Fibonacci sequence estimation
+                </span>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 transition-colors hover:bg-muted/50">
+                <div className="p-2 rounded-full bg-primary/10">
+                  <UserCheck className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-sm font-medium">
+                  Up to 10 participants per room
+                </span>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 transition-colors hover:bg-muted/50">
+                <div className="p-2 rounded-full bg-primary/10">
+                  <Rocket className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-sm font-medium">
+                  No registration required
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
