@@ -136,17 +136,23 @@ export function GameRoomScreen() {
 
               <CardContent>
                 <div className="grid grid-cols-6 md:grid-cols-12 gap-3">
-                  {FIBONACCI_CARDS.map((card) => (
-                    <VotingCard
-                      key={card}
-                      value={card}
-                      isSelected={currentUser.currentVote === card}
-                      isDisabled={room.votesRevealed || state.isLoading}
-                      isRevealed={room.votesRevealed}
-                      onClick={handleVote}
-                      className="col-span-1"
-                    />
-                  ))}
+                  {FIBONACCI_CARDS.map((card) => {
+                    // Get the current user's latest vote from the room state
+                    const currentUserInRoom = room.users.find(
+                      (u) => u.id === currentUser.id,
+                    );
+                    return (
+                      <VotingCard
+                        key={card}
+                        value={card}
+                        isSelected={currentUserInRoom?.currentVote === card}
+                        isDisabled={room.votesRevealed || state.isLoading}
+                        isRevealed={room.votesRevealed}
+                        onClick={handleVote}
+                        className="col-span-1"
+                      />
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
