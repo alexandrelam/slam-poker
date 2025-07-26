@@ -22,4 +22,9 @@ app.get("/health", (req, res) => {
 // Serve static files from the frontend build
 app.use(express.static(path.join(__dirname, "../web/dist")));
 
+// Catch-all handler for React Router (SPA) - exclude API routes
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../web/dist/index.html"));
+});
+
 export default app;
