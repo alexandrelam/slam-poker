@@ -10,25 +10,19 @@ import { Separator } from "../components/ui/separator";
 import { RoomHeader } from "../components/RoomHeader";
 import { UserList } from "../components/UserList";
 import { VotingCard } from "../components/VotingCard";
+import { OtherVotingCard } from "../components/OtherVotingCard";
 import { Eye, RotateCcw, AlertCircle, Vote } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import type { FibonacciCard } from "../types";
 
-// Import the Fibonacci cards from backend types
-const FIBONACCI_CARDS: FibonacciCard[] = [
-  "0",
-  "1",
-  "2",
-  "3",
-  "5",
-  "8",
-  "13",
-  "21",
-  "34",
-  "55",
-  "89",
-  "?",
-];
+// Primary cards that will be displayed as large cards
+const PRIMARY_CARDS: FibonacciCard[] = ["1", "2", "3", "5"];
+
+// Cards that will be grouped in the "Other" popup
+const OTHER_CARDS: FibonacciCard[] = ["8", "13", "21", "34", "55", "89"];
+
+// Special cards that remain separate
+const SPECIAL_CARDS: FibonacciCard[] = ["?"];
 
 export function GameRoomScreen() {
   const { state, actions } = useApp();
@@ -148,25 +142,61 @@ export function GameRoomScreen() {
               </CardHeader>
 
               <CardContent>
-                <div className="grid grid-cols-6 md:grid-cols-12 gap-3">
-                  {FIBONACCI_CARDS.map((card) => {
-                    // Get the current user's latest vote from the room state
-                    const currentUserInRoom = room.users.find(
-                      (u) => u.id === currentUser.id,
-                    );
-                    return (
-                      <VotingCard
-                        key={card}
-                        value={card}
-                        isSelected={currentUserInRoom?.currentVote === card}
+                {(() => {
+                  // Get the current user's latest vote from the room state
+                  const currentUserInRoom = room.users.find(
+                    (u) => u.id === currentUser.id,
+                  );
+
+                  return (
+                    <div className="flex flex-wrap items-center justify-center gap-4">
+                      {/* Primary Cards */}
+                      {PRIMARY_CARDS.map((card) => (
+                        <VotingCard
+                          key={card}
+                          value={card}
+                          isSelected={currentUserInRoom?.currentVote === card}
+                          isDisabled={room.votesRevealed || state.isLoading}
+                          isRevealed={room.votesRevealed}
+                          onClick={handleVote}
+                        />
+                      ))}
+
+                      {/* Other Card - Popup */}
+                      <OtherVotingCard
+                        isSelected={
+                          currentUserInRoom?.currentVote !== undefined &&
+                          OTHER_CARDS.includes(
+                            currentUserInRoom.currentVote as FibonacciCard,
+                          )
+                        }
+                        selectedValue={
+                          currentUserInRoom?.currentVote &&
+                          OTHER_CARDS.includes(
+                            currentUserInRoom.currentVote as FibonacciCard,
+                          )
+                            ? (currentUserInRoom.currentVote as FibonacciCard)
+                            : undefined
+                        }
                         isDisabled={room.votesRevealed || state.isLoading}
                         isRevealed={room.votesRevealed}
                         onClick={handleVote}
-                        className="col-span-1"
                       />
-                    );
-                  })}
-                </div>
+
+                      {/* Special Cards */}
+                      {SPECIAL_CARDS.map((card) => (
+                        <VotingCard
+                          key={card}
+                          value={card}
+                          isSelected={currentUserInRoom?.currentVote === card}
+                          isDisabled={room.votesRevealed || state.isLoading}
+                          isRevealed={room.votesRevealed}
+                          onClick={handleVote}
+                        />
+                      ))}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
 

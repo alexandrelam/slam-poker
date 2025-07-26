@@ -19,7 +19,6 @@ export interface Room {
 }
 
 export const FIBONACCI_CARDS = [
-  "0",
   "1",
   "2",
   "3",

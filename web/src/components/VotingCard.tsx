@@ -29,7 +29,7 @@ export function VotingCard({
   return (
     <Card
       className={cn(
-        "relative flex items-center justify-center w-16 h-24 cursor-pointer transition-all duration-300 select-none",
+        "relative flex items-center justify-center w-24 h-32 cursor-pointer transition-all duration-300 select-none",
         "hover:scale-105 hover:shadow-md active:scale-95",
         "border-2 border-border",
         {
@@ -57,7 +57,7 @@ export function VotingCard({
       tabIndex={isDisabled ? -1 : 0}
     >
       <span
-        className={cn("text-2xl font-bold transition-colors", {
+        className={cn("text-3xl font-bold transition-colors", {
           "text-green-800": isSelected,
           "text-muted-foreground": isRevealed && !isSelected,
           "text-foreground": !isSelected && !isRevealed,
