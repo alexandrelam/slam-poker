@@ -39,6 +39,7 @@ export interface AppState {
   connectionStatus: ConnectionStatus;
   error: string | null;
   isLoading: boolean;
+  isChangingName: boolean;
 }
 
 export interface JoinRoomForm {

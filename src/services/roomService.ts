@@ -6,6 +6,7 @@ import {
   RevealPermission,
 } from "@/types/room.types";
 import { generateRoomCode } from "@/utils/roomCodeGenerator";
+import userService from "@/services/userService";
 import logger from "@/utils/logger";
 
 class RoomService {
@@ -213,6 +214,42 @@ class RoomService {
   canUserStartNextRound(roomCode: string, userId: string): boolean {
     // Same logic as reveal votes for now
     return this.canUserRevealVotes(roomCode, userId);
+  }
+
+  changeUserName(
+    roomCode: string,
+    userId: string,
+    newName: string,
+  ): Room | null {
+    const room = this.rooms.get(roomCode);
+    if (!room) return null;
+
+    const userIndex = room.users.findIndex((u) => u.id === userId);
+    if (userIndex < 0) return null;
+
+    const currentUser = room.users[userIndex];
+    if (!currentUser.isOnline) return null;
+
+    try {
+      const updatedUser = userService.changeUserName(currentUser, newName);
+      room.users[userIndex] = updatedUser;
+
+      logger.info("User name changed in room", {
+        roomCode,
+        userId,
+        oldName: currentUser.name,
+        newName: updatedUser.name,
+      });
+
+      return room;
+    } catch (error) {
+      logger.warn("Failed to change user name in room", {
+        roomCode,
+        userId,
+        error: (error as Error).message,
+      });
+      return null;
+    }
   }
 
   getRoomCount(): number {

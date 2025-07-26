@@ -94,6 +94,11 @@ class SocketService {
     this.socket.emit("update-room-settings", settings);
   }
 
+  changeName(newName: string) {
+    if (!this.socket) throw new Error("Socket not connected");
+    this.socket.emit("change-name", { newName });
+  }
+
   // Event listener management
   on<T extends keyof ServerToClientEvents>(
     event: T,

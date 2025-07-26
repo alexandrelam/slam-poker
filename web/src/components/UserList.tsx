@@ -5,6 +5,8 @@ import { Separator } from "./ui/separator";
 import { CheckCircle, Clock, Crown, User } from "lucide-react";
 import { cn } from "../lib/utils";
 import { RoomSettings } from "./RoomSettings";
+import { NameEditor } from "./NameEditor";
+import { useApp } from "../context/AppContext";
 import type { UIUser } from "../types";
 
 interface UserListProps {
@@ -22,6 +24,8 @@ export function UserList({
   votesRevealed = false,
   className,
 }: UserListProps) {
+  const { actions } = useApp();
+
   const getInitials = (name: string): string => {
     return name
       .split(" ")
@@ -83,7 +87,7 @@ export function UserList({
         <CardContent className="space-y-3">
           {users.map((user, index) => (
             <div key={user.id}>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 group">
                 {/* Avatar */}
                 <div className="relative">
                   <Avatar
@@ -115,14 +119,23 @@ export function UserList({
                 {/* User info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p
-                      className={cn(
-                        "font-medium truncate",
-                        !user.isOnline && "opacity-50",
-                      )}
-                    >
-                      {user.name}
-                    </p>
+                    {user.id === currentUserId ? (
+                      <NameEditor
+                        currentName={user.name}
+                        onChangeName={actions.changeName}
+                        isLoading={actions.isNameChanging()}
+                        className={cn(!user.isOnline && "opacity-50")}
+                      />
+                    ) : (
+                      <p
+                        className={cn(
+                          "font-medium truncate",
+                          !user.isOnline && "opacity-50",
+                        )}
+                      >
+                        {user.name}
+                      </p>
+                    )}
 
                     {/* Badges */}
                     <div className="flex items-center gap-1">

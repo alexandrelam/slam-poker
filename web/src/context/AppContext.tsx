@@ -21,6 +21,7 @@ const initialState: AppState = {
   connectionStatus: ConnectionStatus.DISCONNECTED,
   error: null,
   isLoading: false,
+  isChangingName: false,
 };
 
 // Action types
@@ -41,6 +42,11 @@ type AppAction =
   | { type: "VOTES_REVEALED"; payload: { room: Room } }
   | { type: "ROUND_RESET"; payload: { room: Room } }
   | { type: "ROOM_SETTINGS_UPDATED"; payload: { room: Room } }
+  | {
+      type: "NAME_CHANGED";
+      payload: { userId: string; newName: string; room: Room };
+    }
+  | { type: "SET_NAME_CHANGING"; payload: boolean }
   | { type: "ROOM_JOIN_FAILED"; payload: string }
   | { type: "RESET_TO_LANDING" };
 
@@ -52,6 +58,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
     case "SET_ERROR":
       return { ...state, error: action.payload, isLoading: false };
+
+    case "SET_NAME_CHANGING":
+      return { ...state, isChangingName: action.payload };
 
     case "SET_CONNECTION_STATUS":
       return { ...state, connectionStatus: action.payload };
@@ -74,7 +83,24 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case "VOTES_REVEALED":
     case "ROUND_RESET":
     case "ROOM_SETTINGS_UPDATED":
-      return { ...state, currentRoom: action.payload.room };
+    case "NAME_CHANGED":
+      // Update current user if they changed their own name
+      const nameChangedState = {
+        ...state,
+        currentRoom: action.payload.room,
+        isChangingName: false, // Clear loading state
+      };
+      if (
+        action.type === "NAME_CHANGED" &&
+        state.currentUser &&
+        action.payload.userId === state.currentUser.id
+      ) {
+        nameChangedState.currentUser = {
+          ...state.currentUser,
+          name: action.payload.newName,
+        };
+      }
+      return nameChangedState;
 
     case "ROOM_JOIN_FAILED":
       return {
@@ -110,11 +136,13 @@ interface AppContextType {
     updateRoomSettings: (settings: {
       revealPermission: RevealPermission;
     }) => void;
+    changeName: (newName: string) => void;
     getCurrentRoom: () => UIRoom | null;
     isUserFacilitator: () => boolean;
     hasUserVoted: () => boolean;
     canRevealVotes: () => boolean;
     canStartNextRound: () => boolean;
+    isNameChanging: () => boolean;
     leaveRoom: () => void;
     leaveRoomAndNavigateHome: () => void;
   };
@@ -176,8 +204,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "ROOM_SETTINGS_UPDATED", payload: data });
       });
 
+      socketService.on("name-changed", (data) => {
+        dispatch({ type: "NAME_CHANGED", payload: data });
+      });
+
       socketService.on("error", (data) => {
         dispatch({ type: "SET_ERROR", payload: data.message });
+        // Clear any pending loading states on error
+        dispatch({ type: "SET_NAME_CHANGING", payload: false });
       });
 
       socketService.on("room-not-found", () => {
@@ -297,6 +331,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
 
+    changeName: (newName: string) => {
+      try {
+        dispatch({ type: "SET_NAME_CHANGING", payload: true });
+        socketService.changeName(newName);
+      } catch (error) {
+        dispatch({ type: "SET_NAME_CHANGING", payload: false });
+        dispatch({ type: "SET_ERROR", payload: "Failed to change name" });
+      }
+    },
+
     getCurrentRoom: (): UIRoom | null => {
       return state.currentRoom ? convertToUIRoom(state.currentRoom) : null;
     },
@@ -360,6 +404,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       return false;
+    },
+
+    isNameChanging: (): boolean => {
+      return state.isChangingName;
     },
 
     leaveRoom: () => {

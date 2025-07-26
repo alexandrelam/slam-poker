@@ -43,6 +43,23 @@ class UserService {
 
     return updatedUser;
   }
+
+  changeUserName(user: User, newName: string): User {
+    if (!this.isValidUserName(newName)) {
+      throw new Error("Invalid user name. Must be 1-50 characters.");
+    }
+
+    const sanitizedName = this.sanitizeUserName(newName);
+    const updatedUser = { ...user, name: sanitizedName };
+
+    logger.info("User name changed", {
+      userId: user.id,
+      oldName: user.name,
+      newName: sanitizedName,
+    });
+
+    return updatedUser;
+  }
 }
 
 export default new UserService();

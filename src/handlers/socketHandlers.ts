@@ -226,6 +226,55 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
     }
   });
 
+  socket.on("change-name", ({ newName }) => {
+    try {
+      const { userId, roomCode } = socket.data;
+
+      if (!userId || !roomCode) {
+        socket.emit("error", { message: "Not joined to any room" });
+        return;
+      }
+
+      if (!newName || typeof newName !== "string") {
+        socket.emit("error", { message: "Invalid name provided" });
+        return;
+      }
+
+      if (!userService.isValidUserName(newName)) {
+        socket.emit("error", {
+          message: "Invalid user name. Must be 1-50 characters.",
+        });
+        return;
+      }
+
+      const updatedRoom = roomService.changeUserName(roomCode, userId, newName);
+      if (!updatedRoom) {
+        socket.emit("error", { message: "Failed to change name" });
+        return;
+      }
+
+      // Update socket data with new name
+      socket.data.userName = userService.sanitizeUserName(newName);
+
+      // Broadcast name change to all room participants (including sender)
+      io.in(roomCode).emit("name-changed", {
+        userId,
+        newName: socket.data.userName,
+        room: updatedRoom,
+      });
+
+      logger.info("User name changed via socket", {
+        socketId: socket.id,
+        userId,
+        roomCode,
+        newName: socket.data.userName,
+      });
+    } catch (error) {
+      logger.error("Error in change-name handler", error as Error);
+      socket.emit("error", { message: "Failed to change name" });
+    }
+  });
+
   socket.on("disconnect", (reason) => {
     try {
       const { userId, roomCode } = socket.data;

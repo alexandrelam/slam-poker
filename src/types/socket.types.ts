@@ -8,6 +8,7 @@ export interface ClientToServerEvents {
   "update-room-settings": (data: {
     revealPermission: RevealPermission;
   }) => void;
+  "change-name": (data: { newName: string }) => void;
 }
 
 export interface ServerToClientEvents {
@@ -21,6 +22,11 @@ export interface ServerToClientEvents {
   "votes-revealed": (data: { room: Room }) => void;
   "round-reset": (data: { room: Room }) => void;
   "room-settings-updated": (data: { room: Room }) => void;
+  "name-changed": (data: {
+    userId: string;
+    newName: string;
+    room: Room;
+  }) => void;
   error: (data: { message: string }) => void;
   "room-not-found": () => void;
   "invalid-vote": () => void;
