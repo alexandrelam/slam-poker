@@ -1,3 +1,4 @@
+import type { Socket } from "socket.io";
 import type {
   User,
   Room,
@@ -7,7 +8,11 @@ import type {
 } from "./room.types";
 
 export interface ClientToServerEvents {
-  "join-room": (data: { roomCode: string; userName: string }) => void;
+  "join-room": (data: {
+    roomCode: string;
+    userName: string;
+    userId: string;
+  }) => void;
   vote: (data: { vote: FibonacciCard }) => void;
   "reveal-votes": () => void;
   "next-round": () => void;
@@ -54,3 +59,10 @@ export interface SocketData {
   roomCode?: string;
   userName?: string;
 }
+
+export type SocketType = Socket<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  InterServerEvents,
+  SocketData
+>;

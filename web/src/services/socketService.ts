@@ -7,6 +7,7 @@ import type {
   KickPermission,
 } from "../types";
 import { ConnectionStatus } from "../types";
+import { getOrCreateUserId } from "../lib/userStorage";
 
 class SocketService {
   private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null =
@@ -72,7 +73,17 @@ class SocketService {
   // Event emission methods
   joinRoom(roomCode: string, userName: string) {
     if (!this.socket) throw new Error("Socket not connected");
-    this.socket.emit("join-room", { roomCode, userName });
+
+    // Get or create persistent user ID
+    const userId = getOrCreateUserId();
+
+    console.log("Joining room with persistent user ID:", {
+      roomCode,
+      userName,
+      userId,
+    });
+
+    this.socket.emit("join-room", { roomCode, userName, userId });
   }
 
   vote(vote: FibonacciCard) {

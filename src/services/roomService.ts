@@ -31,7 +31,45 @@ class RoomService {
     };
 
     this.rooms.set(roomCode, room);
-    logger.info("Room created", { roomCode });
+    logger.forceInfo("Room created with generated code", { roomCode });
+    return room;
+  }
+
+  createRoomWithCode(requestedCode: string): Room | null {
+    const roomCode = requestedCode.toUpperCase();
+
+    // Check if room already exists
+    if (this.rooms.has(roomCode)) {
+      logger.forceWarn("Cannot create room - code already exists", {
+        roomCode,
+      });
+      return null;
+    }
+
+    // Validate room code format (basic validation)
+    if (!roomCode || roomCode.length < 3 || roomCode.length > 10) {
+      logger.forceWarn("Cannot create room - invalid code format", {
+        roomCode,
+        length: roomCode.length,
+      });
+      return null;
+    }
+
+    const room: Room = {
+      code: roomCode,
+      users: [],
+      votingInProgress: false,
+      votesRevealed: false,
+      createdAt: new Date(),
+      revealPermission: "host-only",
+      kickPermission: "host-only",
+    };
+
+    this.rooms.set(roomCode, room);
+    logger.forceInfo("Room created with user-specified code", {
+      roomCode,
+      requestedCode,
+    });
     return room;
   }
 
@@ -80,19 +118,74 @@ class RoomService {
   }
 
   castVote(roomCode: string, userId: string, vote: FibonacciCard): Room | null {
+    logger.forceInfo("=== ROOM SERVICE castVote START ===", {
+      roomCode,
+      userId,
+      vote,
+    });
+
     const room = this.rooms.get(roomCode);
-    if (!room) return null;
+    if (!room) {
+      logger.forceWarn("castVote FAILED: room not found", {
+        roomCode,
+        userId,
+        availableRooms: Array.from(this.rooms.keys()),
+      });
+      return null;
+    }
+
+    logger.forceInfo("castVote: room found", {
+      roomCode,
+      userId,
+      roomUserCount: room.users.length,
+      roomUsers: room.users.map((u) => ({
+        id: u.id,
+        name: u.name,
+        isOnline: u.isOnline,
+      })),
+    });
 
     if (!FIBONACCI_CARDS.includes(vote)) {
-      logger.warn("Invalid vote attempt", { roomCode, userId, vote });
+      logger.forceWarn("castVote FAILED: invalid vote", {
+        roomCode,
+        userId,
+        vote,
+        validCards: FIBONACCI_CARDS,
+      });
       return null;
     }
 
     const user = room.users.find((u) => u.id === userId);
-    if (!user || !user.isOnline) return null;
+    if (!user) {
+      logger.forceWarn("castVote FAILED: user not found in room", {
+        roomCode,
+        userId,
+        roomUsers: room.users.map((u) => ({
+          id: u.id,
+          name: u.name,
+          isOnline: u.isOnline,
+        })),
+      });
+      return null;
+    }
+
+    if (!user.isOnline) {
+      logger.forceWarn("castVote FAILED: user is offline", {
+        roomCode,
+        userId,
+        userName: user.name,
+        userIsOnline: user.isOnline,
+      });
+      return null;
+    }
 
     user.currentVote = vote;
-    logger.info("Vote cast", { roomCode, userId, hasVoted: true });
+    logger.forceInfo("=== ROOM SERVICE castVote SUCCESS ===", {
+      roomCode,
+      userId,
+      userName: user.name,
+      hasVoted: true,
+    });
     return room;
   }
 
@@ -203,41 +296,6 @@ class RoomService {
 
     logger.info("Room settings updated", { roomCode, settings });
     return room;
-  }
-
-  canUserRevealVotes(roomCode: string, userId: string): boolean {
-    const room = this.rooms.get(roomCode);
-    if (!room) return false;
-
-    // If permission is set to everyone, any online user can reveal
-    if (room.revealPermission === "everyone") {
-      const user = room.users.find((u) => u.id === userId);
-      return user?.isOnline ?? false;
-    }
-
-    // If permission is host-only, only the first user (host) can reveal
-    const hostUser = room.users[0];
-    return hostUser?.id === userId && hostUser?.isOnline;
-  }
-
-  canUserStartNextRound(roomCode: string, userId: string): boolean {
-    // Same logic as reveal votes for now
-    return this.canUserRevealVotes(roomCode, userId);
-  }
-
-  canUserKickDisconnected(roomCode: string, userId: string): boolean {
-    const room = this.rooms.get(roomCode);
-    if (!room) return false;
-
-    // If permission is set to everyone, any online user can kick
-    if (room.kickPermission === "everyone") {
-      const user = room.users.find((u) => u.id === userId);
-      return user?.isOnline ?? false;
-    }
-
-    // If permission is host-only, only the first user (host) can kick
-    const hostUser = room.users[0];
-    return hostUser?.id === userId && hostUser?.isOnline;
   }
 
   kickUser(roomCode: string, userIdToKick: string): Room | null {

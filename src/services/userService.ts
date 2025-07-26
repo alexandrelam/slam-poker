@@ -15,6 +15,22 @@ class UserService {
     return user;
   }
 
+  createUserWithId(userId: string, name: string): User {
+    const user: User = {
+      id: userId,
+      name: name.trim(),
+      isOnline: true,
+      currentVote: undefined,
+    };
+
+    logger.forceInfo("User created with provided ID", {
+      userId: user.id,
+      userName: user.name,
+      providedId: userId,
+    });
+    return user;
+  }
+
   isValidUserName(name: string): boolean {
     const trimmedName = name?.trim();
     return !!(

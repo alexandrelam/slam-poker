@@ -9,6 +9,11 @@ class Logger {
     }
   }
 
+  // Force certain critical logs to always show
+  forceInfo(message: string, ...args: any[]) {
+    console.log(`[INFO] ${new Date().toISOString()} - ${message}`, ...args);
+  }
+
   error(message: string, error?: Error, ...args: any[]) {
     console.error(
       `[ERROR] ${new Date().toISOString()} - ${message}`,
@@ -21,6 +26,11 @@ class Logger {
     if (this.isDevelopment) {
       console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, ...args);
     }
+  }
+
+  // Force certain critical warnings to always show
+  forceWarn(message: string, ...args: any[]) {
+    console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, ...args);
   }
 
   debug(message: string, ...args: any[]) {
