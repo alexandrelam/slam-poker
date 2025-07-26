@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path";
 import corsMiddleware from "@/middleware/cors";
 import securityMiddleware from "@/middleware/security";
 import logger from "@/utils/logger";
@@ -18,11 +19,7 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-app.get("/", (req, res) => {
-  res.json({
-    message: "SLAM Poker Backend API",
-    version: "1.0.0",
-  });
-});
+// Serve static files from the frontend build
+app.use(express.static(path.join(__dirname, "../web/dist")));
 
 export default app;
