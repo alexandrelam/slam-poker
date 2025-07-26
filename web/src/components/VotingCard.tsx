@@ -200,6 +200,7 @@ export function VotingCard({
           // Subtle rainbow holographic effects for selected cards (reduced opacity for readability)
           ...(isSelected &&
             !isRevealed && {
+              backdropFilter: "blur(0.5px) saturate(1.3)",
               background: `
                 radial-gradient(circle at 50% 50%, 
                   hsla(${baseHue}deg, 100%, 85%, 0.25) 0%,
@@ -213,27 +214,7 @@ export function VotingCard({
                   hsla(${baseHue + 210}deg, 95%, 75%, 0.2)
                 )
               `,
-              backdropFilter: "blur(0.5px) saturate(1.3)",
-              border: `4px solid transparent`,
-              backgroundImage: `
-                radial-gradient(circle at 50% 50%, 
-                  hsla(${baseHue}deg, 100%, 85%, 0.25) 0%,
-                  hsla(${baseHue + 60}deg, 100%, 80%, 0.2) 25%,
-                  hsla(${baseHue + 120}deg, 95%, 75%, 0.15) 50%,
-                  hsla(${baseHue + 180}deg, 90%, 80%, 0.1) 75%,
-                  transparent 90%
-                ),
-                linear-gradient(135deg, 
-                  hsla(${baseHue + 30}deg, 100%, 85%, 0.3),
-                  hsla(${baseHue + 210}deg, 95%, 75%, 0.2)
-                ),
-                linear-gradient(45deg, 
-                  hsl(${baseHue}deg, 100%, 60%), 
-                  hsl(${baseHue + 60}deg, 100%, 60%)
-                )
-              `,
-              backgroundOrigin: "border-box",
-              backgroundClip: "content-box, content-box, border-box",
+              border: `4px solid hsl(${baseHue}deg, 100%, 60%)`,
               boxShadow: `
                 0 0 40px hsla(${baseHue}deg, 100%, 70%, 0.3),
                 0 0 80px hsla(${baseHue + 120}deg, 100%, 70%, 0.2),
