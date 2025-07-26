@@ -22,6 +22,10 @@ export const ERROR_MESSAGES = {
   USER_NOT_FOUND_IN_ROOM: "User not found in room",
   DUPLICATE_USER_IN_ROOM:
     "You are already in this room. Please close other tabs or windows.",
+  FAILED_TO_CREATE_USER: "Failed to create user",
+  USER_ID_MISMATCH: "User ID mismatch",
+  FAILED_TO_ADD_USER_TO_ROOM: "Failed to add user to room",
+  ROOM_NO_LONGER_EXISTS: "Room no longer exists",
 } as const;
 
 // Socket error response utilities

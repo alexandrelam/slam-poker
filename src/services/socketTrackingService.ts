@@ -183,6 +183,23 @@ class SocketTrackingService {
       existingSocketId,
     });
 
+    // Ensure socket leaves the room before disconnection
+    try {
+      existingSocket.leave(roomCode);
+      logger.info("Socket left room before forced disconnection", {
+        roomCode,
+        userId,
+        socketId: existingSocketId,
+      });
+    } catch (error) {
+      logger.warn("Failed to make socket leave room before disconnection", {
+        roomCode,
+        userId,
+        socketId: existingSocketId,
+        error: (error as Error).message,
+      });
+    }
+
     // Force disconnect the existing socket
     existingSocket.disconnect(true);
 

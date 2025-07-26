@@ -1,4 +1,10 @@
-import { createContext, useContext, useReducer, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import type {
@@ -166,6 +172,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const navigate = useNavigate();
 
+  // Store timeout reference to prevent memory leaks
+  const joinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Helper functions
   const convertToUIRoom = (room: Room): UIRoom => {
     const uiUsers: UIUser[] = room.users.map((user) => ({
@@ -225,8 +234,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       socketService.on("room-state", (data) => {
         const { room, reason } = data;
 
-        // Handle initial room join/creation
-        if (reason === "initial-join") {
+        // Handle initial room join/creation and reconnections
+        if (reason === "initial-join" || reason === "reconnection-sync") {
           // Find current user in the room based on persistent userId
           const currentUserId = getOrCreateUserId();
           const currentUser = room.users.find(
@@ -234,12 +243,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
           );
 
           if (currentUser) {
+            // Clear any pending join timeout
+            if (joinTimeoutRef.current) {
+              clearTimeout(joinTimeoutRef.current);
+              joinTimeoutRef.current = null;
+            }
+
             dispatch({ type: "SET_USER", payload: currentUser });
             dispatch({ type: "SET_ROOM", payload: room });
             dispatch({ type: "SET_SCREEN", payload: AppScreen.ROOM });
             dispatch({ type: "SET_LOADING", payload: false });
             // Navigate to the room URL
             navigate(`/${room.code}`);
+          } else {
+            // Clear timeout on error
+            if (joinTimeoutRef.current) {
+              clearTimeout(joinTimeoutRef.current);
+              joinTimeoutRef.current = null;
+            }
+
+            // User not found in room - this shouldn't happen but handle gracefully
+            console.error("Room join failed: Current user not found in room", {
+              reason,
+              currentUserId,
+              roomCode: room.code,
+              roomUsers: room.users.map((u: any) => ({
+                id: u.id,
+                name: u.name,
+              })),
+            });
+            dispatch({
+              type: "SET_ERROR",
+              payload: "Failed to join room - user not found",
+            });
+            dispatch({ type: "SET_LOADING", payload: false });
           }
         } else {
           // Handle state updates for existing room
@@ -248,9 +285,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
 
       socketService.on("error", (data) => {
+        // Clear join timeout on any error
+        if (joinTimeoutRef.current) {
+          clearTimeout(joinTimeoutRef.current);
+          joinTimeoutRef.current = null;
+        }
+
         dispatch({ type: "SET_ERROR", payload: data.message });
         // Clear any pending loading states on error
         dispatch({ type: "SET_NAME_CHANGING", payload: false });
+        dispatch({ type: "SET_LOADING", payload: false });
       });
 
       socketService.on("room-not-found", () => {
@@ -270,6 +314,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       socketService.removeAllListeners();
     };
   }, [state.connectionStatus]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (joinTimeoutRef.current) {
+        clearTimeout(joinTimeoutRef.current);
+        joinTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Actions
   const actions: AppContextType["actions"] = {
@@ -309,10 +363,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     joinRoom: (roomCode: string, userName: string) => {
       try {
+        // Clear any existing timeout
+        if (joinTimeoutRef.current) {
+          clearTimeout(joinTimeoutRef.current);
+          joinTimeoutRef.current = null;
+        }
+
         dispatch({ type: "SET_LOADING", payload: true });
         socketService.joinRoom(roomCode, userName);
+
+        // Set a timeout to prevent being stuck on loading indefinitely
+        joinTimeoutRef.current = setTimeout(() => {
+          if (state.isLoading && state.currentScreen !== AppScreen.ROOM) {
+            console.error("Join room timeout - no response from server");
+            dispatch({
+              type: "SET_ERROR",
+              payload: "Join room timeout - please try again",
+            });
+            dispatch({ type: "SET_LOADING", payload: false });
+            joinTimeoutRef.current = null;
+          }
+        }, 10000); // 10 second timeout
+
         // Note: Room joining is now handled by the global room-state event handler
       } catch (error) {
+        // Clear timeout on immediate error
+        if (joinTimeoutRef.current) {
+          clearTimeout(joinTimeoutRef.current);
+          joinTimeoutRef.current = null;
+        }
+
         dispatch({ type: "SET_ERROR", payload: "Failed to join room" });
         dispatch({ type: "SET_LOADING", payload: false });
       }

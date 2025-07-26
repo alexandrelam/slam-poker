@@ -5,7 +5,7 @@ import userService from "@/services/userService";
 import permissionService from "@/services/permissionService";
 import socketTrackingService from "@/services/socketTrackingService";
 import logger from "@/utils/logger";
-import { SocketErrorHandler } from "@/utils/socketErrors";
+import { SocketErrorHandler, ERROR_MESSAGES } from "@/utils/socketErrors";
 import { RoomStateBroadcaster } from "@/utils/roomStateBroadcast";
 import {
   requireAuthentication,
@@ -99,6 +99,8 @@ export const handleJoinRoom = withErrorLogging(
       // Check for duplicate user in room
       const existingUser = room.users.find((u) => u.id === userId);
       if (existingUser) {
+        let shouldReconnect = false;
+
         if (existingUser.isOnline) {
           logger.forceInfo(
             "Join room: DUPLICATE USER DETECTED - disconnecting existing connection",
@@ -120,15 +122,14 @@ export const handleJoinRoom = withErrorLogging(
 
           if (disconnected) {
             logger.forceInfo(
-              "Join room: existing connection disconnected, proceeding with new connection",
+              "Join room: existing connection disconnected, will reconnect user",
               {
                 socketId: socket.id,
                 userId,
                 roomCode: room.code,
               },
             );
-            // Continue with normal join logic below
-            // The disconnect handler will clean up the existing user
+            shouldReconnect = true;
           } else {
             logger.forceWarn(
               "Join room: failed to disconnect existing connection, treating as offline user",
@@ -138,30 +139,29 @@ export const handleJoinRoom = withErrorLogging(
                 roomCode: room.code,
               },
             );
-            // Treat as offline user and continue with reconnection logic
+            shouldReconnect = true; // Still try to reconnect
           }
+        } else {
+          // User is offline, can reconnect
+          logger.forceInfo("Join room: user is offline, will reconnect", {
+            socketId: socket.id,
+            userId,
+            userName: existingUser.name,
+            roomCode: room.code,
+          });
+          shouldReconnect = true;
         }
 
-        // Handle offline user reconnection or continue after disconnecting existing connection
-        if (
-          !existingUser.isOnline ||
-          socketTrackingService.disconnectExistingUserSocket(
-            io,
-            room.code,
+        // Handle reconnection for both offline users and successfully disconnected users
+        if (shouldReconnect) {
+          logger.forceInfo("Join room: RECONNECTING user", {
+            socketId: socket.id,
             userId,
-          )
-        ) {
-          logger.forceInfo(
-            "Join room: RECONNECTING user (was offline or existing connection cleared)",
-            {
-              socketId: socket.id,
-              userId,
-              oldUserName: existingUser.name,
-              newUserName: userName,
-              roomCode: room.code,
-              wasOnline: existingUser.isOnline,
-            },
-          );
+            oldUserName: existingUser.name,
+            newUserName: userName,
+            roomCode: room.code,
+            wasOnline: existingUser.isOnline,
+          });
 
           // Update user as online and with new name if changed
           existingUser.isOnline = true;
@@ -207,12 +207,36 @@ export const handleJoinRoom = withErrorLogging(
     const sanitizedName = userService.sanitizeUserName(userName);
     const user = userService.createUserWithId(userId, sanitizedName);
 
+    if (!user) {
+      logger.forceWarn("Join room: user creation FAILED", {
+        socketId: socket.id,
+        userId,
+        userName: sanitizedName,
+      });
+      SocketErrorHandler.emitError(
+        socket,
+        ERROR_MESSAGES.FAILED_TO_CREATE_USER,
+      );
+      return;
+    }
+
     logger.forceInfo("Join room: user created with provided ID", {
       socketId: socket.id,
       userId: user.id,
       userName: user.name,
       userIsOnline: user.isOnline,
     });
+
+    // Validate user ID matches what was requested
+    if (user.id !== userId) {
+      logger.forceWarn("Join room: userId mismatch after creation", {
+        socketId: socket.id,
+        requestedUserId: userId,
+        actualUserId: user.id,
+      });
+      SocketErrorHandler.emitError(socket, ERROR_MESSAGES.USER_ID_MISMATCH);
+      return;
+    }
 
     // Set socket data
     socket.data.userId = user.id;
@@ -227,6 +251,23 @@ export const handleJoinRoom = withErrorLogging(
       socketData: socket.data,
     });
 
+    // Re-validate room exists before adding user (edge case: room deleted during join process)
+    const currentRoom = roomService.findRoom(room.code);
+    if (!currentRoom) {
+      logger.forceWarn("Join room: room no longer exists after user creation", {
+        socketId: socket.id,
+        roomCode: room.code,
+        userId: user.id,
+      });
+      // Clean up socket tracking since room is gone
+      socketTrackingService.removeUserSocket(room.code, user.id);
+      SocketErrorHandler.emitError(
+        socket,
+        ERROR_MESSAGES.ROOM_NO_LONGER_EXISTS,
+      );
+      return;
+    }
+
     const updatedRoom = roomService.addUserToRoom(room.code, user);
     if (!updatedRoom) {
       logger.forceWarn("Join room: addUserToRoom FAILED", {
@@ -235,6 +276,22 @@ export const handleJoinRoom = withErrorLogging(
         userId: user.id,
       });
       SocketErrorHandler.emitOperationError(socket, "join");
+      return;
+    }
+
+    // Validate user was actually added to the room
+    const userInRoom = updatedRoom.users.find((u) => u.id === userId);
+    if (!userInRoom) {
+      logger.forceWarn("Join room: user not found in room after addition", {
+        socketId: socket.id,
+        roomCode: room.code,
+        userId,
+        roomUsers: updatedRoom.users.map((u) => ({ id: u.id, name: u.name })),
+      });
+      SocketErrorHandler.emitError(
+        socket,
+        ERROR_MESSAGES.FAILED_TO_ADD_USER_TO_ROOM,
+      );
       return;
     }
 
