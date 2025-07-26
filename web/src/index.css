@@ -163,3 +163,80 @@ h1 {
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* 3D Transform Support */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .perspective-600 {
+    perspective: 600px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .transform-gpu {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Holographic Card Effects */
+  .holographic-card {
+    position: relative;
+  }
+
+  .holographic-card::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(
+      45deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Enhanced glow for holographic cards */
+  .holographic-card {
+    filter: drop-shadow(0 4px 12px rgba(150, 255, 255, 0.3))
+      drop-shadow(0 8px 24px rgba(255, 150, 255, 0.25))
+      drop-shadow(0 12px 36px rgba(255, 255, 150, 0.2))
+      drop-shadow(0 16px 48px rgba(255, 255, 255, 0.15));
+  }
+
+  /* Smooth transitions for reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .holographic-card,
+    .transform-gpu {
+      transform: none !important;
+      filter: none !important;
+      background: var(--card) !important;
+      transition: none !important;
+    }
+
+    .holographic-card::before {
+      display: none;
+    }
+  }
+
+  /* Enhanced glow effect for selected holographic cards */
+  .holographic-card.selected {
+    box-shadow:
+      0 0 20px rgba(34, 197, 94, 0.4),
+      0 0 40px rgba(34, 197, 94, 0.2),
+      0 8px 32px rgba(0, 0, 0, 0.12);
+  }
+}
