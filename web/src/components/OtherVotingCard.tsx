@@ -135,6 +135,10 @@ export function OtherVotingCard({
   const gradientX = ((mousePosition.x + 1) / 2) * 100; // Convert -1,1 to 0,100
   const gradientY = ((mousePosition.y + 1) / 2) * 100;
 
+  // "Other" card gets purple/magenta theme (240° base hue offset)
+  const baseHue = 240;
+  const mouseHueShift = (gradientX + gradientY) * 0.5; // Mouse adds variation across spectrum
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -180,15 +184,15 @@ export function OtherVotingCard({
                 !isDisabled && {
                   background: `
                     radial-gradient(circle at ${gradientX}% ${gradientY}%, 
-                      hsla(${(gradientX + gradientY) * 2}deg, 100%, 85%, 0.5) 0%,
-                      hsla(${(gradientX + gradientY) * 2 + 60}deg, 100%, 75%, 0.4) 25%,
-                      hsla(${(gradientX + gradientY) * 2 + 120}deg, 100%, 65%, 0.3) 50%,
-                      hsla(${(gradientX + gradientY) * 2 + 180}deg, 100%, 80%, 0.2) 75%,
+                      hsla(${baseHue + mouseHueShift}deg, 100%, 85%, 0.5) 0%,
+                      hsla(${baseHue + mouseHueShift + 60}deg, 100%, 80%, 0.4) 25%,
+                      hsla(${baseHue + mouseHueShift + 120}deg, 95%, 70%, 0.3) 50%,
+                      hsla(${baseHue + mouseHueShift + 180}deg, 90%, 75%, 0.2) 75%,
                       transparent 90%
                     ),
                     linear-gradient(135deg, 
-                      hsla(${gradientX * 3.6}deg, 100%, 85%, 0.6),
-                      hsla(${gradientY * 3.6 + 180}deg, 100%, 75%, 0.4)
+                      hsla(${baseHue + 45}deg, 100%, 85%, 0.6),
+                      hsla(${baseHue + 225}deg, 95%, 75%, 0.4)
                     )
                   `,
                   backdropFilter: "blur(0.8px) saturate(1.5)",
@@ -263,14 +267,14 @@ export function OtherVotingCard({
                   className="absolute inset-0 rounded-md opacity-40 mix-blend-soft-light pointer-events-none"
                   style={{
                     background: `
-                    conic-gradient(from ${(gradientX + gradientY) * 1.5}deg at ${50 + gradientX * 0.3}% ${50 + gradientY * 0.3}%,
-                      hsl(0, 100%, 85%) 0deg,
-                      hsl(60, 100%, 85%) 60deg,
-                      hsl(120, 100%, 85%) 120deg,
-                      hsl(180, 100%, 85%) 180deg,
-                      hsl(240, 100%, 85%) 240deg,
-                      hsl(300, 100%, 85%) 300deg,
-                      hsl(0, 100%, 85%) 360deg
+                    conic-gradient(from ${(gradientX + gradientY) * 1.5 + baseHue}deg at ${50 + gradientX * 0.3}% ${50 + gradientY * 0.3}%,
+                      hsl(${baseHue + 0}, 100%, 85%) 0deg,
+                      hsl(${baseHue + 60}, 100%, 85%) 60deg,
+                      hsl(${baseHue + 120}, 100%, 85%) 120deg,
+                      hsl(${baseHue + 180}, 100%, 85%) 180deg,
+                      hsl(${baseHue + 240}, 100%, 85%) 240deg,
+                      hsl(${baseHue + 300}, 100%, 85%) 300deg,
+                      hsl(${baseHue + 360}, 100%, 85%) 360deg
                     )
                   `,
                     transform: `translateX(${transforms.rotateY * 0.3}px) translateY(${transforms.rotateX * 0.3}px)`,
@@ -282,14 +286,14 @@ export function OtherVotingCard({
                   className="absolute inset-0 rounded-md opacity-70 mix-blend-overlay pointer-events-none"
                   style={{
                     background: `
-                    conic-gradient(from ${(gradientX + gradientY) * 3}deg at ${gradientX}% ${gradientY}%,
-                      hsl(0, 100%, 75%) 0deg,
-                      hsl(60, 100%, 75%) 60deg,
-                      hsl(120, 100%, 75%) 120deg,
-                      hsl(180, 100%, 75%) 180deg,
-                      hsl(240, 100%, 75%) 240deg,
-                      hsl(300, 100%, 75%) 300deg,
-                      hsl(0, 100%, 75%) 360deg
+                    conic-gradient(from ${(gradientX + gradientY) * 3 + baseHue}deg at ${gradientX}% ${gradientY}%,
+                      hsl(${baseHue + 0}, 100%, 75%) 0deg,
+                      hsl(${baseHue + 60}, 100%, 75%) 60deg,
+                      hsl(${baseHue + 120}, 100%, 75%) 120deg,
+                      hsl(${baseHue + 180}, 100%, 75%) 180deg,
+                      hsl(${baseHue + 240}, 100%, 75%) 240deg,
+                      hsl(${baseHue + 300}, 100%, 75%) 300deg,
+                      hsl(${baseHue + 360}, 100%, 75%) 360deg
                     )
                   `,
                     transform: `translateX(${transforms.rotateY * 0.8}px) translateY(${transforms.rotateX * 0.8}px)`,

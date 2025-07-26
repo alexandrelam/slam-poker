@@ -4,6 +4,24 @@ import { Check } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { FibonacciCard } from "../types";
 
+// Color mapping function to assign unique hue ranges to each card
+function getCardHue(value: FibonacciCard): number {
+  const hueMap: Record<FibonacciCard, number> = {
+    "1": 0, // Red/Pink
+    "2": 60, // Orange/Yellow
+    "3": 120, // Green
+    "5": 180, // Blue/Cyan
+    "8": 200, // Deep Blue
+    "13": 220, // Blue-Purple
+    "21": 240, // Purple
+    "34": 260, // Purple-Magenta
+    "55": 280, // Magenta
+    "89": 290, // Magenta-Pink
+    "?": 300, // Violet/Pink
+  };
+  return hueMap[value] || 0;
+}
+
 interface VotingCardProps {
   value: FibonacciCard;
   isSelected?: boolean;
@@ -111,6 +129,10 @@ export function VotingCard({
   const gradientX = ((mousePosition.x + 1) / 2) * 100; // Convert -1,1 to 0,100
   const gradientY = ((mousePosition.y + 1) / 2) * 100;
 
+  // Get card-specific base hue offset for rainbow rotation
+  const baseHue = getCardHue(value);
+  const mouseHueShift = (gradientX + gradientY) * 0.5; // Mouse adds variation across spectrum
+
   return (
     <div
       className={cn("perspective-600", {
@@ -153,15 +175,15 @@ export function VotingCard({
             !isDisabled && {
               background: `
                 radial-gradient(circle at ${gradientX}% ${gradientY}%, 
-                  hsla(${(gradientX + gradientY) * 2}deg, 100%, 85%, 0.5) 0%,
-                  hsla(${(gradientX + gradientY) * 2 + 60}deg, 100%, 75%, 0.4) 25%,
-                  hsla(${(gradientX + gradientY) * 2 + 120}deg, 100%, 65%, 0.3) 50%,
-                  hsla(${(gradientX + gradientY) * 2 + 180}deg, 100%, 80%, 0.2) 75%,
+                  hsla(${baseHue + mouseHueShift}deg, 100%, 85%, 0.5) 0%,
+                  hsla(${baseHue + mouseHueShift + 60}deg, 100%, 80%, 0.4) 25%,
+                  hsla(${baseHue + mouseHueShift + 120}deg, 95%, 70%, 0.3) 50%,
+                  hsla(${baseHue + mouseHueShift + 180}deg, 90%, 75%, 0.2) 75%,
                   transparent 90%
                 ),
                 linear-gradient(135deg, 
-                  hsla(${gradientX * 3.6}deg, 100%, 85%, 0.6),
-                  hsla(${gradientY * 3.6 + 180}deg, 100%, 75%, 0.4)
+                  hsla(${baseHue + 45}deg, 100%, 85%, 0.6),
+                  hsla(${baseHue + 225}deg, 95%, 75%, 0.4)
                 )
               `,
               backdropFilter: "blur(0.8px) saturate(1.5)",
@@ -213,14 +235,14 @@ export function VotingCard({
               className="absolute inset-0 rounded-md opacity-40 mix-blend-soft-light pointer-events-none"
               style={{
                 background: `
-                conic-gradient(from ${(gradientX + gradientY) * 1.5}deg at ${50 + gradientX * 0.3}% ${50 + gradientY * 0.3}%,
-                  hsl(0, 100%, 85%) 0deg,
-                  hsl(60, 100%, 85%) 60deg,
-                  hsl(120, 100%, 85%) 120deg,
-                  hsl(180, 100%, 85%) 180deg,
-                  hsl(240, 100%, 85%) 240deg,
-                  hsl(300, 100%, 85%) 300deg,
-                  hsl(0, 100%, 85%) 360deg
+                conic-gradient(from ${(gradientX + gradientY) * 1.5 + baseHue}deg at ${50 + gradientX * 0.3}% ${50 + gradientY * 0.3}%,
+                  hsl(${baseHue + 0}, 100%, 85%) 0deg,
+                  hsl(${baseHue + 60}, 100%, 85%) 60deg,
+                  hsl(${baseHue + 120}, 100%, 85%) 120deg,
+                  hsl(${baseHue + 180}, 100%, 85%) 180deg,
+                  hsl(${baseHue + 240}, 100%, 85%) 240deg,
+                  hsl(${baseHue + 300}, 100%, 85%) 300deg,
+                  hsl(${baseHue + 360}, 100%, 85%) 360deg
                 )
               `,
                 transform: `translateX(${transforms.rotateY * 0.3}px) translateY(${transforms.rotateX * 0.3}px)`,
@@ -232,14 +254,14 @@ export function VotingCard({
               className="absolute inset-0 rounded-md opacity-70 mix-blend-overlay pointer-events-none"
               style={{
                 background: `
-                conic-gradient(from ${(gradientX + gradientY) * 3}deg at ${gradientX}% ${gradientY}%,
-                  hsl(0, 100%, 75%) 0deg,
-                  hsl(60, 100%, 75%) 60deg,
-                  hsl(120, 100%, 75%) 120deg,
-                  hsl(180, 100%, 75%) 180deg,
-                  hsl(240, 100%, 75%) 240deg,
-                  hsl(300, 100%, 75%) 300deg,
-                  hsl(0, 100%, 75%) 360deg
+                conic-gradient(from ${(gradientX + gradientY) * 3 + baseHue}deg at ${gradientX}% ${gradientY}%,
+                  hsl(${baseHue + 0}, 100%, 75%) 0deg,
+                  hsl(${baseHue + 60}, 100%, 75%) 60deg,
+                  hsl(${baseHue + 120}, 100%, 75%) 120deg,
+                  hsl(${baseHue + 180}, 100%, 75%) 180deg,
+                  hsl(${baseHue + 240}, 100%, 75%) 240deg,
+                  hsl(${baseHue + 300}, 100%, 75%) 300deg,
+                  hsl(${baseHue + 360}, 100%, 75%) 360deg
                 )
               `,
                 transform: `translateX(${transforms.rotateY * 0.8}px) translateY(${transforms.rotateX * 0.8}px)`,
