@@ -178,7 +178,7 @@ export function GameRoomScreen() {
                     onClick={handleRevealVotes}
                     disabled={!canRevealVotes || state.isLoading}
                     className="flex-1"
-                    variant={room.votesRevealed ? "outline" : "default"}
+                    variant={room.votesRevealed ? "secondary" : "default"}
                   >
                     <Eye className="w-4 h-4 mr-2" />
                     {room.votesRevealed ? "Votes Revealed" : "Reveal Votes"}
