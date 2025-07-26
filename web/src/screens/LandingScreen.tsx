@@ -29,6 +29,7 @@ export function LandingScreen() {
   const [activeTab, setActiveTab] = useState<"join" | "create">("join");
   const [joinForm, setJoinForm] = useState({ roomCode: "", userName: "" });
   const [createForm, setCreateForm] = useState({ userName: "" });
+  const [isVisible, setIsVisible] = useState(false);
 
   // Auto-connect to socket when component mounts
   useEffect(() => {
@@ -36,6 +37,12 @@ export function LandingScreen() {
       actions.connectSocket();
     }
   }, [state.connectionStatus, actions]);
+
+  // Handle smooth entrance animation
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleJoinRoom = (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,12 +81,18 @@ export function LandingScreen() {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-lg space-y-8">
         {/* Header */}
-        <div className="text-center space-y-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-700">
+        <div
+          className={`text-center space-y-4 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+        >
           <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="p-3 rounded-full bg-primary/10 animate-in fade-in-0 slide-in-from-left-4 duration-500 delay-200">
+            <div
+              className={`p-3 rounded-full bg-primary/10 transition-all duration-500 delay-200 ${isVisible ? "opacity-100 -translate-x-0" : "opacity-0 -translate-x-4"}`}
+            >
               <Zap className="w-10 h-10 text-primary" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent animate-in fade-in-0 slide-in-from-right-4 duration-500 delay-300">
+            <h1
+              className={`text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent transition-all duration-500 delay-300 ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"}`}
+            >
               SLAM Poker
             </h1>
           </div>
@@ -137,7 +150,9 @@ export function LandingScreen() {
         )}
 
         {/* Main Card */}
-        <Card className="border-2 border-border/50 shadow-lg backdrop-blur-sm animate-in fade-in-0 slide-in-from-bottom-6 duration-500 delay-500">
+        <Card
+          className={`border-2 border-border/50 shadow-lg backdrop-blur-sm transition-all duration-500 delay-500 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+        >
           <CardHeader className="pb-6">
             <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
               <Button
@@ -265,7 +280,9 @@ export function LandingScreen() {
         </Card>
 
         {/* Features */}
-        <Card className="animate-in fade-in-0 slide-in-from-bottom-8 duration-500 delay-700">
+        <Card
+          className={`transition-all duration-500 delay-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+        >
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="w-5 h-5" />
