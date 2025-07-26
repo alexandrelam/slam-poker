@@ -69,17 +69,20 @@ CORS_ORIGIN=http://localhost:3000
 The frontend requires WebSocket URL configuration for different environments:
 
 **For Development (`web/.env.development`):**
+
 ```env
 VITE_WS_URL=http://localhost:3001
 ```
 
 **For Production (`web/.env.production`):**
+
 ```env
 # Leave empty to use same origin as frontend (recommended for production)
 VITE_WS_URL=
 ```
 
 The frontend will automatically:
+
 - Use `VITE_WS_URL` if specified
 - Fall back to `window.location.origin` (same server as frontend) if not specified
 - This ensures WebSocket connections work in both development and production environments
