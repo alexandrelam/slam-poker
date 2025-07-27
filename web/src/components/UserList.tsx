@@ -7,6 +7,7 @@ import { CheckCircle, Clock, Crown, User, UserX } from "lucide-react";
 import { cn } from "../lib/utils";
 import { RoomSettings } from "./RoomSettings";
 import { NameEditor } from "./NameEditor";
+import { EmojiPickerCard } from "./EmojiPickerCard";
 import { useApp } from "../context/AppContext";
 import type { UIUser } from "../types";
 
@@ -216,6 +217,9 @@ export function UserList({
           </div>
         </CardContent>
       </Card>
+
+      {/* Emoji Picker */}
+      <EmojiPickerCard />
 
       {/* Room Settings */}
       <RoomSettings />
