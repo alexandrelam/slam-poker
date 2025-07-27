@@ -30,7 +30,7 @@ export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
   const FRICTION = 0.98;
   const BOUNCE_DAMPING = 0.7;
   const MIN_VELOCITY = 0.1;
-  const EMOJI_SIZE = 24; // Base emoji size in pixels
+  const EMOJI_SIZE = 56; // Base emoji size in pixels
   const CLEANUP_TIME = 30000; // Remove emojis after 30 seconds
 
   // Initialize canvas size
