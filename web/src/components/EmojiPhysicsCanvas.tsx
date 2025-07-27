@@ -39,16 +39,18 @@ export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      const rect = canvas.getBoundingClientRect();
+      // Use viewport dimensions directly
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
       const dpr = window.devicePixelRatio || 1;
 
       // Set actual canvas size
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
+      canvas.width = viewportWidth * dpr;
+      canvas.height = viewportHeight * dpr;
 
-      // Set canvas style size
-      canvas.style.width = rect.width + "px";
-      canvas.style.height = rect.height + "px";
+      // Set canvas style size (already handled by CSS, but ensure consistency)
+      canvas.style.width = viewportWidth + "px";
+      canvas.style.height = viewportHeight + "px";
 
       // Scale context for high DPI displays
       const ctx = canvas.getContext("2d");
@@ -56,7 +58,7 @@ export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
         ctx.scale(dpr, dpr);
       }
 
-      setCanvasSize({ width: rect.width, height: rect.height });
+      setCanvasSize({ width: viewportWidth, height: viewportHeight });
     };
 
     updateCanvasSize();
@@ -244,11 +246,11 @@ export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
       ref={canvasRef}
       className={`pointer-events-none ${className || ""}`}
       style={{
-        position: "absolute",
+        position: "fixed",
         top: 0,
         left: 0,
-        width: "100%",
-        height: "100%",
+        width: "100vw",
+        height: "100vh",
         zIndex: 1,
       }}
     />
