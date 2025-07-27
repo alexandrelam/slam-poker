@@ -139,15 +139,15 @@ export function BackgroundCanvas({
     );
 
     if (isDark) {
-      gradient.addColorStop(0, "rgba(147, 51, 234, 0.08)");
-      gradient.addColorStop(0.3, "rgba(236, 72, 153, 0.06)");
-      gradient.addColorStop(0.6, "rgba(59, 130, 246, 0.04)");
-      gradient.addColorStop(1, "rgba(16, 185, 129, 0.02)");
+      gradient.addColorStop(0, "rgba(147, 51, 234, 0.02)");
+      gradient.addColorStop(0.3, "rgba(236, 72, 153, 0.015)");
+      gradient.addColorStop(0.6, "rgba(59, 130, 246, 0.01)");
+      gradient.addColorStop(1, "rgba(16, 185, 129, 0.005)");
     } else {
-      gradient.addColorStop(0, "rgba(147, 51, 234, 0.03)");
-      gradient.addColorStop(0.3, "rgba(236, 72, 153, 0.025)");
-      gradient.addColorStop(0.6, "rgba(59, 130, 246, 0.02)");
-      gradient.addColorStop(1, "rgba(16, 185, 129, 0.015)");
+      gradient.addColorStop(0, "rgba(147, 51, 234, 0.04)");
+      gradient.addColorStop(0.3, "rgba(236, 72, 153, 0.03)");
+      gradient.addColorStop(0.6, "rgba(59, 130, 246, 0.025)");
+      gradient.addColorStop(1, "rgba(16, 185, 129, 0.02)");
     }
 
     ctx.fillStyle = gradient;
@@ -172,20 +172,20 @@ export function BackgroundCanvas({
       if (isDark) {
         swirlGradient.addColorStop(
           0,
-          `rgba(${147 + i * 20}, ${51 + i * 10}, 234, 0.06)`,
+          `rgba(${147 + i * 20}, ${51 + i * 10}, 234, 0.015)`,
         );
         swirlGradient.addColorStop(
           0.5,
-          `rgba(${236 - i * 20}, ${72 + i * 15}, 153, 0.04)`,
+          `rgba(${236 - i * 20}, ${72 + i * 15}, 153, 0.01)`,
         );
       } else {
         swirlGradient.addColorStop(
           0,
-          `rgba(${147 + i * 20}, ${51 + i * 10}, 234, 0.025)`,
+          `rgba(${147 + i * 20}, ${51 + i * 10}, 234, 0.035)`,
         );
         swirlGradient.addColorStop(
           0.5,
-          `rgba(${236 - i * 20}, ${72 + i * 15}, 153, 0.02)`,
+          `rgba(${236 - i * 20}, ${72 + i * 15}, 153, 0.025)`,
         );
       }
       swirlGradient.addColorStop(1, "transparent");
@@ -224,8 +224,8 @@ export function BackgroundCanvas({
         );
         const brightness = Math.floor((noiseValue + 1) * 127.5);
 
-        if (brightness > 120) {
-          const alpha = isDark ? brightness * 0.1 : brightness * 0.05;
+        if (brightness > 140) {
+          const alpha = isDark ? brightness * 0.02 : brightness * 0.04;
 
           for (let dx = 0; dx < step && x + dx < canvas.width; dx++) {
             for (let dy = 0; dy < step && y + dy < canvas.height; dy++) {
@@ -246,7 +246,7 @@ export function BackgroundCanvas({
 
   // Initialize particles (much fewer)
   const initParticles = () => {
-    const count = quality === "low" ? 25 : quality === "medium" ? 50 : 75;
+    const count = quality === "low" ? 8 : quality === "medium" ? 15 : 25;
     const particles = [];
 
     for (let i = 0; i < count; i++) {
@@ -259,8 +259,8 @@ export function BackgroundCanvas({
         maxLife: Math.random() * 300 + 200,
         size: Math.random() * 3 + 1,
         hue: Math.random() * 360, // Random starting hue (0-360)
-        saturation: 70 + Math.random() * 30, // High saturation (70-100%)
-        lightness: 50 + Math.random() * 20, // Medium-bright lightness (50-70%)
+        saturation: 40 + Math.random() * 30, // Moderate saturation (40-70%)
+        lightness: 45 + Math.random() * 25, // Moderate lightness (45-70%)
       });
     }
 
@@ -336,12 +336,12 @@ export function BackgroundCanvas({
 
       // Adjust saturation and lightness based on theme
       const saturation = isDark
-        ? particle.saturation
-        : particle.saturation * 0.8;
-      const lightness = isDark ? particle.lightness : particle.lightness * 0.9;
+        ? particle.saturation * 0.7
+        : particle.saturation * 0.9;
+      const lightness = isDark ? particle.lightness * 0.8 : particle.lightness;
 
       // Create HSL color with animated hue using cache
-      const finalAlpha = alpha * (isDark ? 0.8 : 0.6);
+      const finalAlpha = alpha * (isDark ? 0.15 : 0.25);
       const hslColor = getHSLColor(
         animatedHue,
         saturation,
@@ -378,11 +378,13 @@ export function BackgroundCanvas({
       // Slower hue animation
       const animatedHue = (particle.hue + time * 10) % 360;
       const saturation = isDark
-        ? particle.saturation * 0.8
-        : particle.saturation * 0.6;
-      const lightness = isDark ? particle.lightness : particle.lightness * 0.8;
+        ? particle.saturation * 0.6
+        : particle.saturation * 0.8;
+      const lightness = isDark
+        ? particle.lightness * 0.7
+        : particle.lightness * 0.9;
 
-      const finalAlpha = alpha * (isDark ? 0.6 : 0.4);
+      const finalAlpha = alpha * (isDark ? 0.1 : 0.2);
       const hslColor = getHSLColor(
         animatedHue,
         saturation,
@@ -413,10 +415,10 @@ export function BackgroundCanvas({
       if (alpha < 0.3) continue;
 
       // Fixed color based on initial hue
-      const saturation = isDark ? 60 : 40;
-      const lightness = isDark ? 60 : 50;
+      const saturation = isDark ? 30 : 35;
+      const lightness = isDark ? 40 : 45;
 
-      const finalAlpha = alpha * (isDark ? 0.4 : 0.3);
+      const finalAlpha = alpha * (isDark ? 0.08 : 0.15);
       const hslColor = getHSLColor(
         particle.hue,
         saturation,
@@ -461,8 +463,8 @@ export function BackgroundCanvas({
         particle.vy = (Math.random() - 0.5) * 0.5;
         particle.life = particle.maxLife;
         particle.hue = Math.random() * 360; // New random hue when respawning
-        particle.saturation = 70 + Math.random() * 30;
-        particle.lightness = 50 + Math.random() * 20;
+        particle.saturation = 40 + Math.random() * 30;
+        particle.lightness = 45 + Math.random() * 25;
       }
     }
   };
@@ -537,11 +539,11 @@ export function BackgroundCanvas({
         );
         gradient.addColorStop(
           0,
-          isDark ? "rgba(147, 51, 234, 0.1)" : "rgba(147, 51, 234, 0.05)",
+          isDark ? "rgba(147, 51, 234, 0.02)" : "rgba(147, 51, 234, 0.04)",
         );
         gradient.addColorStop(
           1,
-          isDark ? "rgba(59, 130, 246, 0.05)" : "rgba(59, 130, 246, 0.02)",
+          isDark ? "rgba(59, 130, 246, 0.01)" : "rgba(59, 130, 246, 0.025)",
         );
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, rect.width, rect.height);
@@ -556,7 +558,7 @@ export function BackgroundCanvas({
             if (noiseTextureRef.current) {
               const time = (Date.now() - startTimeRef.current) * 0.00005;
               ctx.save();
-              ctx.globalAlpha = 0.6;
+              ctx.globalAlpha = isDark ? 0.15 : 0.3;
               ctx.translate(Math.sin(time) * 2, Math.cos(time) * 2);
               ctx.drawImage(
                 noiseTextureRef.current,
@@ -579,7 +581,7 @@ export function BackgroundCanvas({
             // Static noise
             if (noiseTextureRef.current) {
               ctx.save();
-              ctx.globalAlpha = 0.4;
+              ctx.globalAlpha = isDark ? 0.1 : 0.25;
               ctx.drawImage(
                 noiseTextureRef.current,
                 0,
