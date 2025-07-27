@@ -146,6 +146,8 @@ interface AppContextType {
     vote: (vote: FibonacciCard) => void;
     revealVotes: () => void;
     nextRound: () => void;
+    startTimer: (duration?: number) => void;
+    resetTimer: () => void;
     updateRoomSettings: (settings: {
       revealPermission?: RevealPermission;
       kickPermission?: KickPermission;
@@ -221,6 +223,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       socketService.on("round-reset", (data) => {
         dispatch({ type: "ROUND_RESET", payload: data });
+      });
+
+      socketService.on("timer-started", (data) => {
+        dispatch({ type: "UPDATE_ROOM", payload: data.room });
+      });
+
+      socketService.on("timer-stopped", (data) => {
+        dispatch({ type: "UPDATE_ROOM", payload: data.room });
+      });
+
+      socketService.on("timer-reset", (data) => {
+        dispatch({ type: "UPDATE_ROOM", payload: data.room });
       });
 
       socketService.on("room-settings-updated", (data) => {
@@ -425,6 +439,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         socketService.nextRound();
       } catch (error) {
         dispatch({ type: "SET_ERROR", payload: "Failed to start next round" });
+      }
+    },
+
+    startTimer: (duration?: number) => {
+      try {
+        socketService.startTimer(duration);
+      } catch (error) {
+        dispatch({ type: "SET_ERROR", payload: "Failed to start timer" });
+      }
+    },
+
+    resetTimer: () => {
+      try {
+        socketService.resetTimer();
+      } catch (error) {
+        dispatch({ type: "SET_ERROR", payload: "Failed to reset timer" });
       }
     },
 

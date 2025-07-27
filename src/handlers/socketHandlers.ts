@@ -15,6 +15,7 @@ import {
   handleDisconnect,
 } from "./userHandlers";
 import { handleEmojiSpawn } from "./emojiHandlers";
+import { handleStartTimer, handleResetTimer } from "./timerHandlers";
 
 export const handleSocketConnection = (socket: SocketType, io: any) => {
   // Initialize correlation ID for this socket connection
@@ -43,6 +44,10 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
   socket.on("vote", (data) => handleVote(socket, io, data));
   socket.on("reveal-votes", () => handleRevealVotes(socket, io));
   socket.on("next-round", () => handleNextRound(socket, io));
+
+  // Timer-related events
+  socket.on("start-timer", (data) => handleStartTimer(socket, io, data));
+  socket.on("reset-timer", () => handleResetTimer(socket, io));
 
   // User management events
   socket.on("kick-user", (data) => handleKickUser(socket, io, data));

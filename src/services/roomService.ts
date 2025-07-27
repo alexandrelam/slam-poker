@@ -39,6 +39,10 @@ class RoomService {
       createdAt: new Date(),
       revealPermission: "host-only",
       kickPermission: "host-only",
+      // Timer initialization
+      timerStartedAt: null,
+      timerDuration: 300, // 5 minutes default
+      timerRunning: false,
     };
 
     this.rooms.set(roomCode, room);
@@ -113,6 +117,10 @@ class RoomService {
       createdAt: new Date(),
       revealPermission: "host-only",
       kickPermission: "host-only",
+      // Timer initialization
+      timerStartedAt: null,
+      timerDuration: 300, // 5 minutes default
+      timerRunning: false,
     };
 
     this.rooms.set(roomCode, room);
@@ -732,6 +740,55 @@ class RoomService {
       peak_users_across_rooms: stats.peakUsersAcrossRooms,
       memory_usage_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
     });
+  }
+
+  // Timer management methods
+  startTimer(roomCode: string, duration: number = 300): Room | null {
+    const room = this.rooms.get(roomCode);
+    if (!room) return null;
+
+    room.timerStartedAt = new Date();
+    room.timerDuration = duration;
+    room.timerRunning = true;
+
+    logger.logUserAction("Timer started", "start_timer", {
+      roomCode,
+      duration,
+      startedAt: room.timerStartedAt,
+    });
+
+    return room;
+  }
+
+  resetTimer(roomCode: string): Room | null {
+    const room = this.rooms.get(roomCode);
+    if (!room) return null;
+
+    room.timerStartedAt = null;
+    room.timerRunning = false;
+    // Keep duration unchanged for next timer start
+
+    logger.logUserAction("Timer reset", "reset_timer", {
+      roomCode,
+      duration: room.timerDuration,
+    });
+
+    return room;
+  }
+
+  stopTimer(roomCode: string): Room | null {
+    const room = this.rooms.get(roomCode);
+    if (!room) return null;
+
+    room.timerRunning = false;
+    // Keep startedAt for reference if needed
+
+    logger.logUserAction("Timer stopped", "stop_timer", {
+      roomCode,
+      duration: room.timerDuration,
+    });
+
+    return room;
   }
 }
 

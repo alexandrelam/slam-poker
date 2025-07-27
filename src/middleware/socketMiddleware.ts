@@ -117,7 +117,13 @@ export const requireRoom = (
 export const requirePermission = (
   socket: SocketType,
   permissionCheck: (roomCode: string, userId: string) => boolean,
-  action: "reveal" | "nextRound" | "settings" | "kick",
+  action:
+    | "reveal"
+    | "nextRound"
+    | "settings"
+    | "kick"
+    | "startTimer"
+    | "resetTimer",
 ): MiddlewareResult => {
   const { userId, roomCode } = socket.data;
 

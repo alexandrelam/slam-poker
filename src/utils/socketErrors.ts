@@ -14,12 +14,15 @@ export const ERROR_MESSAGES = {
   NO_PERMISSION_NEXT_ROUND: "You don't have permission to start the next round",
   NO_PERMISSION_UPDATE_SETTINGS: "Only the host can update room settings",
   NO_PERMISSION_KICK_USERS: "You don't have permission to kick users",
+  NO_PERMISSION_TIMER: "You don't have permission to control the timer",
   FAILED_TO_REVEAL_VOTES: "Failed to reveal votes",
   FAILED_TO_START_NEXT_ROUND: "Failed to start next round",
   FAILED_TO_UPDATE_SETTINGS: "Failed to update room settings",
   FAILED_TO_KICK_USER: "Failed to kick user",
   FAILED_TO_CAST_VOTE: "Failed to cast vote",
   FAILED_TO_CHANGE_NAME: "Failed to change name",
+  FAILED_TO_START_TIMER: "Failed to start timer",
+  FAILED_TO_RESET_TIMER: "Failed to reset timer",
   USER_ID_TO_KICK_REQUIRED: "User ID to kick is required",
   INVALID_NAME_PROVIDED: "Invalid name provided",
   USER_NOT_FOUND_IN_ROOM: "User not found in room",
@@ -106,13 +109,21 @@ export class SocketErrorHandler {
 
   static emitPermissionError(
     socket: SocketType,
-    action: "reveal" | "nextRound" | "settings" | "kick",
+    action:
+      | "reveal"
+      | "nextRound"
+      | "settings"
+      | "kick"
+      | "startTimer"
+      | "resetTimer",
   ): void {
     const messageMap = {
       reveal: ERROR_MESSAGES.NO_PERMISSION_REVEAL_VOTES,
       nextRound: ERROR_MESSAGES.NO_PERMISSION_NEXT_ROUND,
       settings: ERROR_MESSAGES.NO_PERMISSION_UPDATE_SETTINGS,
       kick: ERROR_MESSAGES.NO_PERMISSION_KICK_USERS,
+      startTimer: ERROR_MESSAGES.NO_PERMISSION_TIMER,
+      resetTimer: ERROR_MESSAGES.NO_PERMISSION_TIMER,
     };
 
     this.emitError(socket, messageMap[action], "permission_error", {
@@ -146,7 +157,9 @@ export class SocketErrorHandler {
       | "nextRound"
       | "settings"
       | "kick"
-      | "changeName",
+      | "changeName"
+      | "startTimer"
+      | "resetTimer",
   ): void {
     const messageMap = {
       join: ERROR_MESSAGES.FAILED_TO_JOIN_ROOM,
@@ -156,6 +169,8 @@ export class SocketErrorHandler {
       settings: ERROR_MESSAGES.FAILED_TO_UPDATE_SETTINGS,
       kick: ERROR_MESSAGES.FAILED_TO_KICK_USER,
       changeName: ERROR_MESSAGES.FAILED_TO_CHANGE_NAME,
+      startTimer: ERROR_MESSAGES.FAILED_TO_START_TIMER,
+      resetTimer: ERROR_MESSAGES.FAILED_TO_RESET_TIMER,
     };
 
     this.emitError(socket, messageMap[operation], "system_error", {

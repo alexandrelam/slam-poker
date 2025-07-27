@@ -101,6 +101,16 @@ class SocketService {
     this.socket.emit("next-round");
   }
 
+  startTimer(duration?: number) {
+    if (!this.socket) throw new Error("Socket not connected");
+    this.socket.emit("start-timer", { duration });
+  }
+
+  resetTimer() {
+    if (!this.socket) throw new Error("Socket not connected");
+    this.socket.emit("reset-timer");
+  }
+
   updateRoomSettings(settings: {
     revealPermission?: RevealPermission;
     kickPermission?: KickPermission;

@@ -82,7 +82,7 @@ class SessionTrackingService {
    */
   updateActivity(
     userId: string,
-    activityType: "vote" | "room_change" | "general",
+    activityType: "vote" | "room_change" | "general" | "timer",
   ): void {
     const session = this.sessions.get(userId);
     if (!session) return;

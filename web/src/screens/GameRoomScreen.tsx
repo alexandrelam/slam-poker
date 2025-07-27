@@ -11,6 +11,7 @@ import { RoomHeader } from "../components/RoomHeader";
 import { UserList } from "../components/UserList";
 import { VotingCard } from "../components/VotingCard";
 import { OtherVotingCard } from "../components/OtherVotingCard";
+import { Timer } from "../components/Timer";
 import { Eye, RotateCcw, AlertCircle, Vote } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { EmojiPhysicsCanvas } from "../components/EmojiPhysicsCanvas";
@@ -97,8 +98,11 @@ export function GameRoomScreen() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - User List */}
-          <div className="lg:col-span-1">
+          {/* Left Column - Timer and User List */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Timer Component */}
+            <Timer />
+
             <UserList
               users={room.users}
               currentUserId={currentUser.id}

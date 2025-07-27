@@ -151,16 +151,26 @@ export const handleRevealVotes = withErrorLogging(
       return;
     }
 
+    // Stop the timer when votes are revealed
+    const roomWithStoppedTimer = roomService.stopTimer(roomCode!);
+
     // Broadcast updated room state to all users
     RoomStateBroadcaster.broadcastStateChange(
       io,
       roomCode!,
-      updatedRoom,
+      roomWithStoppedTimer || updatedRoom,
       "votes-revealed",
     );
 
     // Also send legacy event for backward compatibility
-    io.to(roomCode).emit("votes-revealed", { room: updatedRoom });
+    io.to(roomCode).emit("votes-revealed", {
+      room: roomWithStoppedTimer || updatedRoom,
+    });
+
+    // Emit timer stopped event
+    if (roomWithStoppedTimer) {
+      io.to(roomCode).emit("timer-stopped", { room: roomWithStoppedTimer });
+    }
 
     logger.forceInfo("Votes revealed via socket", {
       socketId: socket.id,
@@ -195,16 +205,31 @@ export const handleNextRound = withErrorLogging(
       return;
     }
 
+    // Restart the timer when starting next round
+    const roomWithTimer = roomService.startTimer(
+      roomCode!,
+      updatedRoom.timerDuration,
+    );
+
     // Broadcast updated room state to all users
     RoomStateBroadcaster.broadcastStateChange(
       io,
       roomCode!,
-      updatedRoom,
+      roomWithTimer || updatedRoom,
       "round-reset",
     );
 
     // Also send legacy event for backward compatibility
-    io.to(roomCode).emit("round-reset", { room: updatedRoom });
+    io.to(roomCode).emit("round-reset", { room: roomWithTimer || updatedRoom });
+
+    // Emit timer started event
+    if (roomWithTimer) {
+      io.to(roomCode).emit("timer-started", {
+        room: roomWithTimer,
+        startedAt: roomWithTimer.timerStartedAt!,
+        duration: roomWithTimer.timerDuration,
+      });
+    }
 
     logger.forceInfo("Next round started via socket", {
       socketId: socket.id,

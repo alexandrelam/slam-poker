@@ -23,6 +23,9 @@ export interface ClientToServerEvents {
   "change-name": (data: { newName: string }) => void;
   "kick-user": (data: { userIdToKick: string }) => void;
   "emoji-spawn": (data: { emoji: string }) => void;
+  // Timer events
+  "start-timer": (data: { duration?: number }) => void;
+  "reset-timer": () => void;
 }
 
 export interface ServerToClientEvents {
@@ -60,6 +63,14 @@ export interface ServerToClientEvents {
     y: number;
     userId: string;
   }) => void;
+  // Timer events
+  "timer-started": (data: {
+    room: Room;
+    startedAt: Date;
+    duration: number;
+  }) => void;
+  "timer-stopped": (data: { room: Room }) => void;
+  "timer-reset": (data: { room: Room }) => void;
 }
 
 export interface InterServerEvents {
