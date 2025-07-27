@@ -82,7 +82,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"total_rooms\" | json | total_rooms != \"\" | unwrap total_rooms",
+          "expr": "{service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap total_rooms",
           "queryType": "",
           "refId": "A"
         }
@@ -150,7 +150,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"total_active_users\" | json | total_active_users != \"\" | unwrap total_active_users",
+          "expr": "{service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap total_active_users",
           "queryType": "",
           "refId": "A"
         }
@@ -219,7 +219,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"average_room_size\" | json | average_room_size != \"\" | unwrap average_room_size",
+          "expr": "{service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap average_room_size",
           "queryType": "",
           "refId": "A"
         }
@@ -287,7 +287,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"rooms_with_voting\" | json | rooms_with_voting != \"\" | unwrap rooms_with_voting",
+          "expr": "{service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap rooms_with_voting",
           "queryType": "",
           "refId": "A"
         }
@@ -501,7 +501,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"active_sessions\" | json | active_sessions != \"\" | unwrap active_sessions",
+          "expr": "{service=\"slam-poker\"} |= \"Session statistics snapshot\" | json | unwrap active_sessions",
           "queryType": "",
           "refId": "A",
           "legendFormat": "Active Sessions"
@@ -512,7 +512,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"high_engagement_sessions\" | json | high_engagement_sessions != \"\" | unwrap high_engagement_sessions",
+          "expr": "{service=\"slam-poker\"} |= \"Session statistics snapshot\" | json | unwrap high_engagement_sessions",
           "queryType": "",
           "refId": "B",
           "legendFormat": "High Engagement Sessions"
@@ -582,7 +582,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"voting_completion_rate\" | json | voting_completion_rate != \"\" | unwrap voting_completion_rate",
+          "expr": "{service=\"slam-poker\"} |= \"Votes revealed\" | json | unwrap voting_completion_rate",
           "queryType": "",
           "refId": "A"
         }
@@ -649,7 +649,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"average_session_duration_minutes\" | json | average_session_duration_minutes != \"\" | unwrap average_session_duration_minutes",
+          "expr": "{service=\"slam-poker\"} |= \"Session statistics snapshot\" | json | unwrap average_session_duration_minutes",
           "queryType": "",
           "refId": "A"
         }
@@ -826,7 +826,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "count by (room_size) ({service=\"slam-poker\"} |= \"User joined room\" | json | room_size != \"\" | unwrap room_size)",
+          "expr": "count by (room_size) ({service=\"slam-poker\"} |= \"User joined room\" | json | unwrap room_size)",
           "queryType": "",
           "refId": "A",
           "legendFormat": "{{room_size}} users"
@@ -920,7 +920,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "avg_over_time({service=\"slam-poker\"} |= \"vote_average\" | json | vote_average != \"\" | unwrap vote_average [10m])",
+          "expr": "avg_over_time({service=\"slam-poker\"} |= \"Votes revealed\" | json | unwrap vote_average [10m])",
           "queryType": "",
           "refId": "A",
           "legendFormat": "Vote Average"
@@ -931,7 +931,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "avg_over_time({service=\"slam-poker\"} |= \"vote_median\" | json | vote_median != \"\" | unwrap vote_median [10m])",
+          "expr": "avg_over_time({service=\"slam-poker\"} |= \"Votes revealed\" | json | unwrap vote_median [10m])",
           "queryType": "",
           "refId": "B",
           "legendFormat": "Vote Median"

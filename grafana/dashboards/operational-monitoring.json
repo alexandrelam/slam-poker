@@ -388,7 +388,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "avg_over_time({service=\"slam-poker\"} |= \"session_duration_ms\" | json | session_duration_ms != \"\" | unwrap session_duration_ms [10m])",
+          "expr": "avg_over_time({service=\"slam-poker\"} |= \"Session statistics snapshot\" | json | unwrap average_session_duration_minutes [10m]) * 60000",
           "queryType": "",
           "refId": "A"
         }
@@ -526,7 +526,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"uptime_seconds\" | json | uptime_seconds != \"\" | unwrap uptime_seconds | __value__ / 3600",
+          "expr": "{service=\"slam-poker\"} |= \"Health check endpoint accessed\" | json | unwrap uptime_seconds | __value__ / 3600",
           "queryType": "",
           "refId": "A"
         }
@@ -587,7 +587,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "count by (disconnect_reason) ({service=\"slam-poker\"} |= \"WebSocket connection closed\" | json | disconnect_reason != \"\")",
+          "expr": "count by (disconnect_reason) ({service=\"slam-poker\"} |= \"WebSocket connection closed\" | json)",
           "queryType": "",
           "refId": "A",
           "legendFormat": "{{disconnect_reason}}"
@@ -650,7 +650,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "count by (user_agent) (rate({service=\"slam-poker\"} |= \"WebSocket connection established\" | json | user_agent != \"\" [10m]))",
+          "expr": "count by (user_agent) (rate({service=\"slam-poker\"} |= \"HTTP request started\" | json [10m]))",
           "queryType": "",
           "refId": "A",
           "legendFormat": "{{user_agent}}"
@@ -728,7 +728,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "topk(10, count by (correlation_id) ({service=\"slam-poker\"} |= \"correlation_id\" | json | correlation_id != \"\"))",
+          "expr": "topk(10, count by (correlation_id) ({service=\"slam-poker\"} |= \"HTTP request started\" | json))",
           "queryType": "",
           "refId": "A"
         }

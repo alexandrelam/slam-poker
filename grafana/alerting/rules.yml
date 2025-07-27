@@ -3,7 +3,7 @@ groups:
     interval: 30s
     rules:
       - alert: SystemHealthCritical
-        expr: '{service="slam-poker"} |= "health_score" | json | health_score != "" | unwrap health_score < 60'
+        expr: '{service="slam-poker"} |= "System health check" | json | unwrap health_score < 60'
         for: 2m
         labels:
           severity: critical
@@ -15,7 +15,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/system-health-critical"
 
       - alert: SystemHealthWarning
-        expr: '{service="slam-poker"} |= "health_score" | json | health_score != "" | unwrap health_score < 80'
+        expr: '{service="slam-poker"} |= "System health check" | json | unwrap health_score < 80'
         for: 5m
         labels:
           severity: warning
@@ -27,7 +27,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/system-health-warning"
 
       - alert: HighErrorRate
-        expr: 'rate({service="slam-poker"} |= "error_category" [5m]) > 0.1'
+        expr: 'rate({service="slam-poker"} |= "Error occurred" [5m]) > 0.1'
         for: 2m
         labels:
           severity: critical
@@ -39,7 +39,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/high-error-rate"
 
       - alert: MemoryUsageHigh
-        expr: '{service="slam-poker"} |= "memory_usage_mb" | json | memory_usage_mb != "" | unwrap memory_usage_mb > 1024'
+        expr: '{service="slam-poker"} |= "Room statistics snapshot" | json | unwrap memory_usage_mb > 1024'
         for: 5m
         labels:
           severity: warning
@@ -51,7 +51,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/high-memory-usage"
 
       - alert: MemoryUsageCritical
-        expr: '{service="slam-poker"} |= "memory_usage_mb" | json | memory_usage_mb != "" | unwrap memory_usage_mb > 2048'
+        expr: '{service="slam-poker"} |= "Room statistics snapshot" | json | unwrap memory_usage_mb > 2048'
         for: 2m
         labels:
           severity: critical
@@ -66,7 +66,7 @@ groups:
     interval: 30s
     rules:
       - alert: HighResponseTime
-        expr: 'quantile_over_time(0.95, {service="slam-poker"} |= "HTTP request completed" | json | duration_ms != "" | unwrap duration_ms [5m]) > 2000'
+        expr: 'quantile_over_time(0.95, {service="slam-poker"} |= "HTTP request completed" | json | unwrap duration_ms [5m]) > 2000'
         for: 3m
         labels:
           severity: warning
@@ -78,7 +78,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/high-response-time"
 
       - alert: CriticalResponseTime
-        expr: 'quantile_over_time(0.95, {service="slam-poker"} |= "HTTP request completed" | json | duration_ms != "" | unwrap duration_ms [5m]) > 5000'
+        expr: 'quantile_over_time(0.95, {service="slam-poker"} |= "HTTP request completed" | json | unwrap duration_ms [5m]) > 5000'
         for: 1m
         labels:
           severity: critical
@@ -129,7 +129,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/room-creation-failures"
 
       - alert: UserEngagementDrop
-        expr: '{service="slam-poker"} |= "engagement_rate" | json | engagement_rate != "" | unwrap engagement_rate < 0.3'
+        expr: '{service="slam-poker"} |= "Session statistics snapshot" | json | unwrap high_engagement_sessions < 0.3'
         for: 10m
         labels:
           severity: warning
@@ -141,7 +141,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/low-engagement"
 
       - alert: VotingCompletionRateLow
-        expr: '{service="slam-poker"} |= "voting_completion_rate" | json | voting_completion_rate != "" | unwrap voting_completion_rate < 70'
+        expr: '{service="slam-poker"} |= "Votes revealed" | json | unwrap voting_completion_rate < 70'
         for: 15m
         labels:
           severity: warning
@@ -153,7 +153,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/low-voting-completion"
 
       - alert: SessionDurationTooShort
-        expr: '{service="slam-poker"} |= "average_session_duration_minutes" | json | average_session_duration_minutes != "" | unwrap average_session_duration_minutes < 5'
+        expr: '{service="slam-poker"} |= "Session statistics snapshot" | json | unwrap average_session_duration_minutes < 5'
         for: 10m
         labels:
           severity: warning
@@ -219,7 +219,7 @@ groups:
     interval: 60s
     rules:
       - alert: HighConcurrentUsers
-        expr: '{service="slam-poker"} |= "total_active_users" | json | total_active_users != "" | unwrap total_active_users > 500'
+        expr: '{service="slam-poker"} |= "Room statistics snapshot" | json | unwrap total_active_users > 500'
         for: 5m
         labels:
           severity: warning
@@ -231,7 +231,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/high-user-count"
 
       - alert: CriticalConcurrentUsers
-        expr: '{service="slam-poker"} |= "total_active_users" | json | total_active_users != "" | unwrap total_active_users > 800'
+        expr: '{service="slam-poker"} |= "Room statistics snapshot" | json | unwrap total_active_users > 800'
         for: 2m
         labels:
           severity: critical
@@ -243,7 +243,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/critical-user-count"
 
       - alert: HighRoomCount
-        expr: '{service="slam-poker"} |= "total_rooms" | json | total_rooms != "" | unwrap total_rooms > 100'
+        expr: '{service="slam-poker"} |= "Room statistics snapshot" | json | unwrap total_rooms > 100'
         for: 5m
         labels:
           severity: warning
@@ -282,7 +282,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/health-check-failing"
 
       - alert: DatabaseConnectionIssues
-        expr: 'rate({service="slam-poker"} |= "Failed to" | json | error != "" [5m]) > 0.01'
+        expr: 'rate({service="slam-poker"} |= "Failed to" [5m]) > 0.01'
         for: 2m
         labels:
           severity: warning
@@ -297,7 +297,7 @@ groups:
     interval: 300s
     rules:
       - alert: ZeroActiveUsers
-        expr: '{service="slam-poker"} |= "total_active_users" | json | total_active_users != "" | unwrap total_active_users == 0'
+        expr: '{service="slam-poker"} |= "Room statistics snapshot" | json | unwrap total_active_users == 0'
         for: 10m
         labels:
           severity: warning
@@ -321,7 +321,7 @@ groups:
           runbook_url: "https://docs.example.com/runbooks/no-room-creations"
 
       - alert: FeatureDegradation
-        expr: '{service="slam-poker"} |= "voting_completion_rate" | json | voting_completion_rate != "" | unwrap voting_completion_rate < 50'
+        expr: '{service="slam-poker"} |= "Votes revealed" | json | unwrap voting_completion_rate < 50'
         for: 20m
         labels:
           severity: critical

@@ -111,7 +111,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"memory_usage_mb\" | json | memory_usage_mb != \"\" | unwrap memory_usage_mb | __value__ * 1024 * 1024",
+          "expr": "{service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap memory_usage_mb | __value__ * 1024 * 1024",
           "queryType": "",
           "refId": "A",
           "legendFormat": "Current Memory Usage"
@@ -225,7 +225,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"total_active_users\" | json | total_active_users != \"\" | unwrap total_active_users",
+          "expr": "{service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap total_active_users",
           "queryType": "",
           "refId": "A",
           "legendFormat": "Current Active Users"
@@ -236,7 +236,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"peak_users_across_rooms\" | json | peak_users_across_rooms != \"\" | unwrap peak_users_across_rooms",
+          "expr": "{service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap peak_users_across_rooms",
           "queryType": "",
           "refId": "B",
           "legendFormat": "Peak Users Capacity"
@@ -305,7 +305,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "({service=\"slam-poker\"} |= \"memory_used_mb\" | json | memory_used_mb != \"\" | unwrap memory_used_mb) / ({service=\"slam-poker\"} |= \"memory_total_mb\" | json | memory_total_mb != \"\" | unwrap memory_total_mb) * 100",
+          "expr": "({service=\"slam-poker\"} |= \"Health check endpoint accessed\" | json | unwrap memory_used_mb) / ({service=\"slam-poker\"} |= \"Health check endpoint accessed\" | json | unwrap memory_total_mb) * 100",
           "queryType": "",
           "refId": "A"
         }
@@ -374,7 +374,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "({service=\"slam-poker\"} |= \"total_active_users\" | json | total_active_users != \"\" | unwrap total_active_users) / 1000 * 100",
+          "expr": "({service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap total_active_users) / 1000 * 100",
           "queryType": "",
           "refId": "A"
         }
@@ -443,7 +443,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "({service=\"slam-poker\"} |= \"total_rooms\" | json | total_rooms != \"\" | unwrap total_rooms) / 100 * 100",
+          "expr": "({service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap total_rooms) / 100 * 100",
           "queryType": "",
           "refId": "A"
         }
@@ -609,7 +609,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.50, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | duration_ms != \"\" | unwrap duration_ms [10m])",
+          "expr": "quantile_over_time(0.50, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | unwrap duration_ms [10m])",
           "queryType": "",
           "refId": "A",
           "legendFormat": "p50 Response Time"
@@ -620,7 +620,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.95, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | duration_ms != \"\" | unwrap duration_ms [10m])",
+          "expr": "quantile_over_time(0.95, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | unwrap duration_ms [10m])",
           "queryType": "",
           "refId": "B",
           "legendFormat": "p95 Response Time"
@@ -631,7 +631,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.99, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | duration_ms != \"\" | unwrap duration_ms [10m])",
+          "expr": "quantile_over_time(0.99, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | unwrap duration_ms [10m])",
           "queryType": "",
           "refId": "C",
           "legendFormat": "p99 Response Time"
@@ -725,7 +725,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "({service=\"slam-poker\"} |= \"total_active_users\" | json | total_active_users != \"\" | unwrap total_active_users) / ({service=\"slam-poker\"} |= \"memory_usage_mb\" | json | memory_usage_mb != \"\" | unwrap memory_usage_mb)",
+          "expr": "({service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap total_active_users) / ({service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap memory_usage_mb)",
           "queryType": "",
           "refId": "A",
           "legendFormat": "Users per MB Memory"
@@ -736,7 +736,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "({service=\"slam-poker\"} |= \"total_active_users\" | json | total_active_users != \"\" | unwrap total_active_users) / ({service=\"slam-poker\"} |= \"total_rooms\" | json | total_rooms != \"\" | unwrap total_rooms)",
+          "expr": "({service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap total_active_users) / ({service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap total_rooms)",
           "queryType": "",
           "refId": "B",
           "legendFormat": "Users per Room"
@@ -919,7 +919,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "predict_linear({service=\"slam-poker\"} |= \"total_active_users\" | json | total_active_users != \"\" | unwrap total_active_users [2h], 3600)",
+          "expr": "predict_linear({service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap total_active_users [2h], 3600)",
           "queryType": "",
           "refId": "A",
           "legendFormat": "Predicted Users (1h)"
@@ -930,7 +930,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "predict_linear({service=\"slam-poker\"} |= \"memory_usage_mb\" | json | memory_usage_mb != \"\" | unwrap memory_usage_mb [2h], 3600)",
+          "expr": "predict_linear({service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap memory_usage_mb [2h], 3600)",
           "queryType": "",
           "refId": "B",
           "legendFormat": "Predicted Memory Usage (1h)"

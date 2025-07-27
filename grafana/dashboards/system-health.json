@@ -82,7 +82,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"System health check\" | json | health_score != \"\" | unwrap health_score",
+          "expr": "{service=\"slam-poker\"} |= \"System health check\" | json | unwrap health_score",
           "queryType": "",
           "refId": "A"
         }
@@ -218,7 +218,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "avg_over_time({service=\"slam-poker\"} |= \"HTTP request completed\" | json | duration_ms != \"\" | unwrap duration_ms [5m])",
+          "expr": "avg_over_time({service=\"slam-poker\"} |= \"HTTP request completed\" | json | unwrap duration_ms [5m])",
           "queryType": "",
           "refId": "A"
         }
@@ -286,7 +286,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"memory_usage_mb\" | json | memory_usage_mb != \"\" | unwrap memory_usage_mb",
+          "expr": "{service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap memory_usage_mb",
           "queryType": "",
           "refId": "A"
         }
@@ -758,7 +758,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.50, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | duration_ms != \"\" | unwrap duration_ms [5m])",
+          "expr": "quantile_over_time(0.50, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | unwrap duration_ms [5m])",
           "queryType": "",
           "refId": "A",
           "legendFormat": "p50 (median)"
@@ -769,7 +769,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.90, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | duration_ms != \"\" | unwrap duration_ms [5m])",
+          "expr": "quantile_over_time(0.90, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | unwrap duration_ms [5m])",
           "queryType": "",
           "refId": "B",
           "legendFormat": "p90"
@@ -780,7 +780,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.95, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | duration_ms != \"\" | unwrap duration_ms [5m])",
+          "expr": "quantile_over_time(0.95, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | unwrap duration_ms [5m])",
           "queryType": "",
           "refId": "C",
           "legendFormat": "p95"
@@ -791,7 +791,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "quantile_over_time(0.99, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | duration_ms != \"\" | unwrap duration_ms [5m])",
+          "expr": "quantile_over_time(0.99, {service=\"slam-poker\"} |= \"HTTP request completed\" | json | unwrap duration_ms [5m])",
           "queryType": "",
           "refId": "D",
           "legendFormat": "p99"

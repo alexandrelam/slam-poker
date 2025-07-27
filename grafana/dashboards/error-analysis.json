@@ -82,7 +82,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"errors_last_hour\" | json | errors_last_hour != \"\" | unwrap errors_last_hour",
+          "expr": "{service=\"slam-poker\"} |= \"Error statistics snapshot\" | json | unwrap errors_last_hour",
           "queryType": "",
           "refId": "A"
         }
@@ -151,7 +151,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"error_rate_per_minute\" | json | error_rate_per_minute != \"\" | unwrap error_rate_per_minute",
+          "expr": "{service=\"slam-poker\"} |= \"Error statistics snapshot\" | json | unwrap error_rate_per_minute",
           "queryType": "",
           "refId": "A"
         }
@@ -211,7 +211,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"top_error_category\" | json | top_error_category != \"\"",
+          "expr": "{service=\"slam-poker\"} |= \"Error statistics snapshot\" | json",
           "queryType": "",
           "refId": "A"
         }
@@ -279,7 +279,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"unique_error_types\" | json | unique_error_types != \"\" | unwrap unique_error_types",
+          "expr": "{service=\"slam-poker\"} |= \"Error statistics snapshot\" | json | unwrap unique_error_types",
           "queryType": "",
           "refId": "A"
         }
@@ -521,7 +521,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "count by (operation_type) (rate({service=\"slam-poker\"} |= \"error_category\" | json | operation_type != \"\" [10m]))",
+          "expr": "count by (operation_type) (rate({service=\"slam-poker\"} |= \"Error occurred\" | json [10m]))",
           "queryType": "",
           "refId": "A",
           "legendFormat": "{{operation_type}}"
@@ -611,7 +611,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"error_category\" | json | correlation_id != \"\" | line_format \"{{.correlation_id}} | {{.error_category}} | {{.operation_type}} | {{.userId}} | {{.roomCode}}\"",
+          "expr": "{service=\"slam-poker\"} |= \"Error occurred\" | json | line_format \"{{.correlation_id}} | {{.error_category}} | {{.operation_type}} | {{.userId}} | {{.roomCode}}\"",
           "queryType": "",
           "refId": "A"
         }
@@ -715,7 +715,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "sum(increase({service=\"slam-poker\"} |= \"error_category\" [1h]))",
+          "expr": "sum(increase({service=\"slam-poker\"} |= \"Error occurred\" [1h]))",
           "queryType": "",
           "refId": "B",
           "legendFormat": "Total Errors (1h window)"
@@ -785,7 +785,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"health_score\" | json | health_score != \"\" | unwrap health_score",
+          "expr": "{service=\"slam-poker\"} |= \"System health check\" | json | unwrap health_score",
           "queryType": "",
           "refId": "A"
         }

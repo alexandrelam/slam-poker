@@ -107,7 +107,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "count by (day) (sum by (userId) (rate({service=\"slam-poker\"} |= \"User session started\" | json | userId != \"\" [1d])))",
+          "expr": "count by (day) (sum by (userId) (rate({service=\"slam-poker\"} |= \"User joined room\" | json [1d])))",
           "queryType": "",
           "refId": "A",
           "legendFormat": "Daily Active Users"
@@ -118,7 +118,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "count by (day) (sum by (roomCode) (rate({service=\"slam-poker\"} |= \"Room created\" | json | room_count != \"\" [1d])))",
+          "expr": "count by (day) (sum by (roomCode) (rate({service=\"slam-poker\"} |= \"Room created\" | json [1d])))",
           "queryType": "",
           "refId": "B",
           "legendFormat": "Daily Room Creations"
@@ -212,7 +212,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "{service=\"slam-poker\"} |= \"engagement_rate\" | json | engagement_rate != \"\" | unwrap engagement_rate",
+          "expr": "{service=\"slam-poker\"} |= \"Session statistics snapshot\" | json | unwrap high_engagement_sessions",
           "queryType": "",
           "refId": "A",
           "legendFormat": "User Engagement Rate"
@@ -282,7 +282,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "avg_over_time({service=\"slam-poker\"} |= \"average_session_duration_minutes\" | json | average_session_duration_minutes != \"\" | unwrap average_session_duration_minutes [1h])",
+          "expr": "avg_over_time({service=\"slam-poker\"} |= \"Session statistics snapshot\" | json | unwrap average_session_duration_minutes [1h])",
           "queryType": "",
           "refId": "A"
         }
@@ -351,7 +351,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "avg_over_time({service=\"slam-poker\"} |= \"votes_cast\" | json | votes_cast != \"\" | unwrap votes_cast [1h])",
+          "expr": "avg_over_time({service=\"slam-poker\"} |= \"Session statistics snapshot\" | json | unwrap average_votes_per_session [1h])",
           "queryType": "",
           "refId": "A"
         }
@@ -420,7 +420,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "avg_over_time({service=\"slam-poker\"} |= \"voting_completion_rate\" | json | voting_completion_rate != \"\" | unwrap voting_completion_rate [2h])",
+          "expr": "avg_over_time({service=\"slam-poker\"} |= \"Votes revealed\" | json | unwrap voting_completion_rate [2h])",
           "queryType": "",
           "refId": "A"
         }
@@ -582,7 +582,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "count by (hour) (sum by (userId) (rate({service=\"slam-poker\"} |= \"User session started\" | json | userId != \"\" [1h])))",
+          "expr": "count by (hour) (sum by (userId) (rate({service=\"slam-poker\"} |= \"User joined room\" | json [1h])))",
           "queryType": "",
           "refId": "A",
           "legendFormat": "Active Users by Hour"
@@ -645,7 +645,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "count by (creation_method) (rate({service=\"slam-poker\"} |= \"Room created\" | json | creation_method != \"\" [6h]))",
+          "expr": "count by (creation_method) (rate({service=\"slam-poker\"} |= \"Room created\" | json [6h]))",
           "queryType": "",
           "refId": "A",
           "legendFormat": "{{creation_method}}"
@@ -739,7 +739,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "avg_over_time({service=\"slam-poker\"} |= \"vote_average\" | json | vote_average != \"\" | unwrap vote_average [30m])",
+          "expr": "avg_over_time({service=\"slam-poker\"} |= \"Votes revealed\" | json | unwrap vote_average [30m])",
           "queryType": "",
           "refId": "A",
           "legendFormat": "Average Vote Value"
@@ -750,7 +750,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "avg_over_time({service=\"slam-poker\"} |= \"vote_median\" | json | vote_median != \"\" | unwrap vote_median [30m])",
+          "expr": "avg_over_time({service=\"slam-poker\"} |= \"Votes revealed\" | json | unwrap vote_median [30m])",
           "queryType": "",
           "refId": "B",
           "legendFormat": "Median Vote Value"
@@ -844,7 +844,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "avg_over_time({service=\"slam-poker\"} |= \"room_duration_minutes\" | json | room_duration_minutes != \"\" | unwrap room_duration_minutes [1h])",
+          "expr": "avg_over_time({service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap average_room_duration_minutes [1h])",
           "queryType": "",
           "refId": "A",
           "legendFormat": "Avg Room Duration (min)"
@@ -855,7 +855,7 @@
             "uid": "Loki"
           },
           "editorMode": "code",
-          "expr": "avg_over_time({service=\"slam-poker\"} |= \"peak_users\" | json | peak_users != \"\" | unwrap peak_users [1h])",
+          "expr": "avg_over_time({service=\"slam-poker\"} |= \"Room statistics snapshot\" | json | unwrap peak_users_across_rooms [1h])",
           "queryType": "",
           "refId": "B",
           "legendFormat": "Avg Peak Users per Room"
