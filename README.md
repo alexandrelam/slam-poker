@@ -2,7 +2,7 @@
 
 A real-time poker planning application for agile teams built with Node.js, TypeScript, and React.
 
-<img width="1216" height="1249" alt="image" src="https://github.com/user-attachments/assets/c6bdf2ae-0696-4f53-8390-18431e1b6f79" />
+<img width="1313" height="1149" alt="image" src="https://github.com/user-attachments/assets/b5be6932-d034-4533-891f-951d4b93ba8c" />
 <img width="1216" height="1249" alt="image" src="https://github.com/user-attachments/assets/a9b776ea-05d1-4ed8-bfa3-5e416ca04bd1" />
 
 ## Features
