@@ -14,6 +14,7 @@ import {
   handleChangeName,
   handleDisconnect,
 } from "./userHandlers";
+import { handleEmojiSpawn } from "./emojiHandlers";
 
 export const handleSocketConnection = (socket: SocketType, io: any) => {
   // Initialize correlation ID for this socket connection
@@ -46,6 +47,9 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
   // User management events
   socket.on("kick-user", (data) => handleKickUser(socket, io, data));
   socket.on("change-name", (data) => handleChangeName(socket, io, data));
+
+  // Emoji events
+  socket.on("emoji-spawn", (data) => handleEmojiSpawn(socket, io, data));
 
   // Enhanced disconnect handler
   socket.on("disconnect", (reason) => {

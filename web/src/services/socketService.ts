@@ -119,6 +119,11 @@ class SocketService {
     this.socket.emit("kick-user", { userIdToKick });
   }
 
+  spawnEmoji(emoji: string) {
+    if (!this.socket) throw new Error("Socket not connected");
+    this.socket.emit("emoji-spawn", { emoji });
+  }
+
   // Event listener management
   on<T extends keyof ServerToClientEvents>(
     event: T,

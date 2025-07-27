@@ -13,6 +13,7 @@ import { VotingCard } from "../components/VotingCard";
 import { OtherVotingCard } from "../components/OtherVotingCard";
 import { Eye, RotateCcw, AlertCircle, Vote } from "lucide-react";
 import { useApp } from "../context/AppContext";
+import { EmojiPhysicsCanvas } from "../components/EmojiPhysicsCanvas";
 import type { FibonacciCard } from "../types";
 
 // Primary cards that will be displayed as large cards
@@ -65,8 +66,11 @@ export function GameRoomScreen() {
   };
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen p-4 relative">
+      {/* Emoji Physics Canvas Background */}
+      <EmojiPhysicsCanvas />
+
+      <div className="max-w-6xl mx-auto space-y-6 relative z-10">
         {/* Header */}
         <RoomHeader
           roomCode={room.code}

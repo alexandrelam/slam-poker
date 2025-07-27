@@ -22,6 +22,7 @@ export interface ClientToServerEvents {
   }) => void;
   "change-name": (data: { newName: string }) => void;
   "kick-user": (data: { userIdToKick: string }) => void;
+  "emoji-spawn": (data: { emoji: string }) => void;
 }
 
 export interface ServerToClientEvents {
@@ -53,6 +54,12 @@ export interface ServerToClientEvents {
   error: (data: { message: string }) => void;
   "room-not-found": () => void;
   "invalid-vote": () => void;
+  "emoji-spawned": (data: {
+    emoji: string;
+    x: number;
+    y: number;
+    userId: string;
+  }) => void;
 }
 
 export interface InterServerEvents {

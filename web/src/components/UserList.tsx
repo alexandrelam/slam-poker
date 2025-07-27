@@ -9,6 +9,7 @@ import { RoomSettings } from "./RoomSettings";
 import { NameEditor } from "./NameEditor";
 import { EmojiPickerCard } from "./EmojiPickerCard";
 import { useApp } from "../context/AppContext";
+import socketService from "../services/socketService";
 import type { UIUser } from "../types";
 
 interface UserListProps {
@@ -27,6 +28,14 @@ export function UserList({
   className,
 }: UserListProps) {
   const { actions } = useApp();
+
+  const handleEmojiSelect = (emoji: string) => {
+    try {
+      socketService.spawnEmoji(emoji);
+    } catch (error) {
+      console.error("Failed to spawn emoji:", error);
+    }
+  };
 
   const getInitials = (name: string): string => {
     return name
@@ -219,7 +228,7 @@ export function UserList({
       </Card>
 
       {/* Emoji Picker */}
-      <EmojiPickerCard />
+      <EmojiPickerCard onEmojiSelect={handleEmojiSelect} />
 
       {/* Room Settings */}
       <RoomSettings />

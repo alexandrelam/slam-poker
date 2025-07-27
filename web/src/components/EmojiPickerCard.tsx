@@ -6,7 +6,11 @@ import {
 } from "./ui/emoji-picker";
 import { Smile } from "lucide-react";
 
-export function EmojiPickerCard() {
+interface EmojiPickerCardProps {
+  onEmojiSelect?: (emoji: string) => void;
+}
+
+export function EmojiPickerCard({ onEmojiSelect }: EmojiPickerCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -16,7 +20,12 @@ export function EmojiPickerCard() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <EmojiPicker className="w-fit max-w-none border rounded-md overflow-hidden">
+        <EmojiPicker
+          className="w-fit max-w-none border rounded-md overflow-hidden"
+          onEmojiSelect={
+            onEmojiSelect ? (emoji) => onEmojiSelect(emoji.emoji) : undefined
+          }
+        >
           <EmojiPickerSearch placeholder="Search emojis..." />
           <EmojiPickerContent className="max-h-40 overflow-y-auto" />
         </EmojiPicker>
