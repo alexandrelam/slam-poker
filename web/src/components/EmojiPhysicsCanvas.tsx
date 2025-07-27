@@ -211,11 +211,13 @@ export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    // Render each emoji
+    // Render each emoji with subtle opacity
     emojisRef.current.forEach((emoji) => {
       ctx.save();
       ctx.translate(emoji.x, emoji.y);
       ctx.rotate(emoji.rotation);
+      // Make emojis semi-transparent so they don't distract from UI
+      ctx.globalAlpha = 0.7;
       ctx.fillText(emoji.emoji, 0, 0);
       ctx.restore();
     });
@@ -251,7 +253,7 @@ export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
         left: 0,
         width: "100vw",
         height: "100vh",
-        zIndex: 1,
+        zIndex: -1,
       }}
     />
   );

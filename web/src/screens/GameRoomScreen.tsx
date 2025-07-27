@@ -66,11 +66,11 @@ export function GameRoomScreen() {
   };
 
   return (
-    <div className="min-h-screen p-4 relative z-10">
+    <div className="min-h-screen p-4 relative">
       {/* Emoji Physics Canvas Background - Fixed to viewport */}
       <EmojiPhysicsCanvas />
 
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6 relative z-10">
         {/* Header */}
         <RoomHeader
           roomCode={room.code}
