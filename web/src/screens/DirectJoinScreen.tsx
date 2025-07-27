@@ -87,6 +87,8 @@ export function DirectJoinScreen() {
       if (storedUsername) {
         console.log("Auto-joining with stored username:", storedUsername);
         setHasAttemptedAutoJoin(true);
+        // Clear any existing errors before attempting to join
+        actions.setError(null);
         actions.joinRoom(roomCode.toUpperCase(), storedUsername);
       } else {
         console.log("No stored username found, showing manual join form");
