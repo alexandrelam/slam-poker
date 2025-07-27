@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import socketService from "../services/socketService";
+import { useUserPreferences } from "../context/UserPreferencesContext";
 import type { UIUser } from "../types";
 
 interface EmojiEntity {
@@ -67,6 +68,7 @@ export function EmojiPhysicsCanvas({
   className,
   users = [],
 }: EmojiPhysicsCanvasProps) {
+  const { emojiEnabled } = useUserPreferences();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
   const emojisRef = useRef<EmojiEntity[]>([]);
@@ -131,6 +133,11 @@ export function EmojiPhysicsCanvas({
       y: number;
       userId: string;
     }) => {
+      // Only add emojis if the user has emojis enabled
+      if (!emojiEnabled) {
+        return;
+      }
+
       // Find user information
       const user = users.find((u) => u.id === data.userId);
       const userName = user?.name || "Unknown";
@@ -168,7 +175,14 @@ export function EmojiPhysicsCanvas({
     return () => {
       socketService.off("emoji-spawned");
     };
-  }, [canvasSize]);
+  }, [canvasSize, emojiEnabled, users]);
+
+  // Clear emojis when disabled
+  useEffect(() => {
+    if (!emojiEnabled) {
+      emojisRef.current = [];
+    }
+  }, [emojiEnabled]);
 
   // Physics simulation
   const updatePhysics = () => {
@@ -369,7 +383,7 @@ export function EmojiPhysicsCanvas({
 
   // Start animation loop
   useEffect(() => {
-    if (canvasSize.width > 0 && canvasSize.height > 0) {
+    if (canvasSize.width > 0 && canvasSize.height > 0 && emojiEnabled) {
       // Animation loop
       const animate = () => {
         updatePhysics();
@@ -385,7 +399,7 @@ export function EmojiPhysicsCanvas({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [canvasSize]);
+  }, [canvasSize, emojiEnabled, updatePhysics, render]);
 
   return (
     <canvas

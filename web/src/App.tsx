@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
+import { UserPreferencesProvider } from "./context/UserPreferencesContext";
 import { LandingScreen } from "./screens/LandingScreen";
 import { DirectJoinScreen } from "./screens/DirectJoinScreen";
 import { GameRoomScreen } from "./screens/GameRoomScreen";
@@ -72,9 +73,11 @@ function AppWrapper() {
 function App() {
   return (
     <ThemeProvider>
-      <AppProvider>
-        <AppWrapper />
-      </AppProvider>
+      <UserPreferencesProvider>
+        <AppProvider>
+          <AppWrapper />
+        </AppProvider>
+      </UserPreferencesProvider>
     </ThemeProvider>
   );
 }

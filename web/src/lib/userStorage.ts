@@ -1,5 +1,6 @@
 const USERNAME_KEY = "slam-poker-username";
 const USER_ID_KEY = "slam-poker-user-id";
+const EMOJI_ENABLED_KEY = "slam-poker-emoji-enabled";
 
 // Username functions
 export function saveUsername(username: string): void {
@@ -76,8 +77,40 @@ export function removeStoredUserId(): void {
   }
 }
 
+// Emoji preference functions
+export function saveEmojiEnabled(enabled: boolean): void {
+  try {
+    localStorage.setItem(EMOJI_ENABLED_KEY, enabled.toString());
+  } catch (error) {
+    console.warn("Failed to save emoji preference to localStorage:", error);
+  }
+}
+
+export function getEmojiEnabled(): boolean {
+  try {
+    const stored = localStorage.getItem(EMOJI_ENABLED_KEY);
+    // Default to true (enabled) if no preference is stored
+    return stored === null ? true : stored === "true";
+  } catch (error) {
+    console.warn(
+      "Failed to retrieve emoji preference from localStorage:",
+      error,
+    );
+    return true; // Default to enabled
+  }
+}
+
+export function removeEmojiEnabled(): void {
+  try {
+    localStorage.removeItem(EMOJI_ENABLED_KEY);
+  } catch (error) {
+    console.warn("Failed to remove emoji preference from localStorage:", error);
+  }
+}
+
 // Clear all user data
 export function clearAllUserData(): void {
   removeStoredUsername();
   removeStoredUserId();
+  removeEmojiEnabled();
 }
