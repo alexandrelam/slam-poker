@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import socketService from "../services/socketService";
+import type { UIUser } from "../types";
 
 interface EmojiEntity {
   id: string;
@@ -13,13 +14,59 @@ interface EmojiEntity {
   rotationSpeed: number;
   userId: string;
   createdAt: number;
+  // User identification
+  userName: string;
+  userInitials: string;
+  userColor: string;
+  showUserIndicator: boolean;
+  userIndicatorOpacity: number;
+  // Animation properties
+  spawnScale: number;
+  spawnGlow: number;
 }
 
 interface EmojiPhysicsCanvasProps {
   className?: string;
+  users?: UIUser[];
 }
 
-export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
+// User color palette for consistent user identification
+const USER_COLORS = [
+  "#3B82F6", // Blue
+  "#EF4444", // Red
+  "#10B981", // Emerald
+  "#F59E0B", // Amber
+  "#8B5CF6", // Violet
+  "#EC4899", // Pink
+  "#06B6D4", // Cyan
+  "#84CC16", // Lime
+  "#F97316", // Orange
+  "#6366F1", // Indigo
+];
+
+// Generate user initials from name
+const getUserInitials = (name: string): string => {
+  return name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+// Get consistent color for user based on their ID
+const getUserColor = (userId: string): string => {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash + userId.charCodeAt(i)) & 0xffffffff;
+  }
+  return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
+};
+
+export function EmojiPhysicsCanvas({
+  className,
+  users = [],
+}: EmojiPhysicsCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
   const emojisRef = useRef<EmojiEntity[]>([]);
@@ -32,6 +79,15 @@ export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
   const MIN_VELOCITY = 0.1;
   const EMOJI_SIZE = 56; // Base emoji size in pixels
   const CLEANUP_TIME = 30000; // Remove emojis after 30 seconds
+
+  // User indicator constants
+  const USER_INDICATOR_DURATION = 3000; // Show user indicator for 3 seconds
+  const USER_INDICATOR_FONT_SIZE = 14;
+  const USER_INDICATOR_OFFSET_Y = -40; // Position above emoji
+
+  // Animation constants
+  const SPAWN_ANIMATION_DURATION = 500; // Spawn animation lasts 500ms
+  const SPAWN_SCALE_MAX = 1.3; // Scale up to 130% during spawn
 
   // Initialize canvas size
   useEffect(() => {
@@ -75,6 +131,12 @@ export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
       y: number;
       userId: string;
     }) => {
+      // Find user information
+      const user = users.find((u) => u.id === data.userId);
+      const userName = user?.name || "Unknown";
+      const userInitials = getUserInitials(userName);
+      const userColor = getUserColor(data.userId);
+
       const newEmoji: EmojiEntity = {
         id: `${Date.now()}-${Math.random()}`,
         emoji: data.emoji,
@@ -87,6 +149,15 @@ export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
         rotationSpeed: (Math.random() - 0.5) * 0.2,
         userId: data.userId,
         createdAt: Date.now(),
+        // User identification
+        userName,
+        userInitials,
+        userColor,
+        showUserIndicator: true,
+        userIndicatorOpacity: 1.0,
+        // Animation properties
+        spawnScale: SPAWN_SCALE_MAX,
+        spawnGlow: 1.0,
       };
 
       emojisRef.current.push(newEmoji);
@@ -122,6 +193,35 @@ export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
 
       // Update rotation
       emoji.rotation += emoji.rotationSpeed;
+
+      // Update animations based on age
+      const ageMs = currentTime - emoji.createdAt;
+
+      // Update spawn animation (scale down to normal size)
+      if (ageMs < SPAWN_ANIMATION_DURATION) {
+        const progress = ageMs / SPAWN_ANIMATION_DURATION;
+        // Ease out animation curve
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        emoji.spawnScale = SPAWN_SCALE_MAX - (SPAWN_SCALE_MAX - 1) * easeOut;
+        emoji.spawnGlow = 1 - progress;
+      } else {
+        emoji.spawnScale = 1;
+        emoji.spawnGlow = 0;
+      }
+
+      // Update user indicator opacity (fade out over time)
+      if (ageMs > USER_INDICATOR_DURATION) {
+        emoji.showUserIndicator = false;
+        emoji.userIndicatorOpacity = 0;
+      } else {
+        // Fade out during the last 1/3 of the duration
+        const fadeStartTime = USER_INDICATOR_DURATION * 0.67;
+        if (ageMs > fadeStartTime) {
+          const fadeProgress =
+            (ageMs - fadeStartTime) / (USER_INDICATOR_DURATION - fadeStartTime);
+          emoji.userIndicatorOpacity = Math.max(0, 1 - fadeProgress);
+        }
+      }
 
       // Boundary collisions
       // Left wall
@@ -211,15 +311,59 @@ export function EmojiPhysicsCanvas({ className }: EmojiPhysicsCanvasProps) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    // Render each emoji with subtle opacity
+    // Render each emoji with user indicators
     emojisRef.current.forEach((emoji) => {
+      // Render emoji with spawn animation
       ctx.save();
       ctx.translate(emoji.x, emoji.y);
       ctx.rotate(emoji.rotation);
+
+      // Apply spawn scale animation
+      ctx.scale(emoji.spawnScale, emoji.spawnScale);
+
+      // Add spawn glow effect
+      if (emoji.spawnGlow > 0) {
+        ctx.shadowColor = emoji.userColor;
+        ctx.shadowBlur = 20 * emoji.spawnGlow;
+      }
+
       // Make emojis semi-transparent so they don't distract from UI
       ctx.globalAlpha = 0.7;
       ctx.fillText(emoji.emoji, 0, 0);
       ctx.restore();
+
+      // Render user indicator if visible
+      if (emoji.showUserIndicator && emoji.userIndicatorOpacity > 0) {
+        ctx.save();
+
+        // Position indicator above emoji
+        const indicatorX = emoji.x;
+        const indicatorY = emoji.y + USER_INDICATOR_OFFSET_Y;
+
+        // Set up user indicator styling
+        ctx.globalAlpha = emoji.userIndicatorOpacity;
+        ctx.font = `bold ${USER_INDICATOR_FONT_SIZE}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        // Draw background circle for initials
+        const bgRadius = 16;
+        ctx.beginPath();
+        ctx.arc(indicatorX, indicatorY, bgRadius, 0, Math.PI * 2);
+        ctx.fillStyle = emoji.userColor;
+        ctx.fill();
+
+        // Draw user initials
+        ctx.fillStyle = "white";
+        ctx.fillText(emoji.userInitials, indicatorX, indicatorY);
+
+        // Draw user name below the circle
+        ctx.font = `${USER_INDICATOR_FONT_SIZE - 2}px sans-serif`;
+        ctx.fillStyle = emoji.userColor;
+        ctx.fillText(emoji.userName, indicatorX, indicatorY + 24);
+
+        ctx.restore();
+      }
     });
   };
 
