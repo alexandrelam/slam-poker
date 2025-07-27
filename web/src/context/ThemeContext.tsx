@@ -18,11 +18,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       return stored;
     }
 
-    // Fall back to system preference
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
-    }
-
     return "light";
   });
 
