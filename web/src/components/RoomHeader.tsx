@@ -80,14 +80,71 @@ export function RoomHeader({
 
   return (
     <Card className={className}>
-      <CardContent className="py-4">
-        <div className="flex items-center justify-between">
+      <CardContent className="p-3 sm:py-4 sm:px-6">
+        {/* Mobile layout: compact 2-row design */}
+        <div className="flex flex-col gap-2 sm:hidden">
+          {/* Row 1: Logo and Leave Room button */}
+          <div className="flex items-center justify-between">
+            <img src="/logo.png" alt="SLAM Poker" className="h-10 w-auto" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onLeaveRoom}
+              className="h-8 px-2 text-xs"
+            >
+              <LogOut className="w-3 h-3 mr-1" />
+              Leave Room
+            </Button>
+          </div>
+
+          {/* Row 2: Room code section with controls */}
+          <div className="flex items-center justify-between gap-3">
+            {/* Room code group */}
+            <div className="flex-1">
+              <p className="text-xs text-muted-foreground mb-1">Room Code</p>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-mono font-bold tracking-wider bg-muted px-3 py-1.5 rounded">
+                  {roomCode}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={copyRoomCode}
+                  className="h-8 w-8 p-0 flex-shrink-0"
+                >
+                  {copied ? (
+                    <Check className="w-3.5 h-3.5 text-green-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Status and controls group */}
+            <div className="flex flex-col items-end gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <ThemeToggle />
+                <Badge
+                  variant={getConnectionStatusVariant()}
+                  className="flex items-center gap-1 px-2 py-0.5"
+                >
+                  {getConnectionStatusIcon()}
+                  <span className="text-xs">{getConnectionStatusText()}</span>
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop layout: horizontal */}
+        <div className="hidden sm:flex items-center justify-between">
           {/* Left side - App title and room code */}
           <div className="flex items-center gap-4">
             <img
               src="/logo.png"
               alt="SLAM Poker"
-              className="h-24 mx-4 my-2 w-auto"
+              className="h-16 lg:h-20 mx-2 my-1 w-auto"
             />
 
             <div className="flex items-center gap-2">
@@ -138,8 +195,8 @@ export function RoomHeader({
           </div>
         </div>
 
-        {/* Optional: Show instructions for mobile users */}
-        <div className="mt-3 pt-3 border-t border-border">
+        {/* Instructions - only show on mobile and center on desktop */}
+        <div className="mt-3 pt-3 border-t border-border sm:mt-4 sm:pt-4">
           <p className="text-xs text-muted-foreground text-center">
             Share the room code with your team to get started
           </p>
