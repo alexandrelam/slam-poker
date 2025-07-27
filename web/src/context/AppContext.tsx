@@ -146,7 +146,7 @@ interface AppContextType {
     vote: (vote: FibonacciCard) => void;
     revealVotes: () => void;
     nextRound: () => void;
-    startTimer: (duration?: number) => void;
+    startTimer: () => void;
     resetTimer: () => void;
     updateRoomSettings: (settings: {
       revealPermission?: RevealPermission;
@@ -442,9 +442,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
 
-    startTimer: (duration?: number) => {
+    startTimer: () => {
       try {
-        socketService.startTimer(duration);
+        socketService.startTimer();
       } catch (error) {
         dispatch({ type: "SET_ERROR", payload: "Failed to start timer" });
       }

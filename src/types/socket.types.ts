@@ -24,7 +24,7 @@ export interface ClientToServerEvents {
   "kick-user": (data: { userIdToKick: string }) => void;
   "emoji-spawn": (data: { emoji: string }) => void;
   // Timer events
-  "start-timer": (data: { duration?: number }) => void;
+  "start-timer": () => void;
   "reset-timer": () => void;
 }
 
@@ -64,11 +64,7 @@ export interface ServerToClientEvents {
     userId: string;
   }) => void;
   // Timer events
-  "timer-started": (data: {
-    room: Room;
-    startedAt: Date;
-    duration: number;
-  }) => void;
+  "timer-started": (data: { room: Room; startedAt: Date }) => void;
   "timer-stopped": (data: { room: Room }) => void;
   "timer-reset": (data: { room: Room }) => void;
 }

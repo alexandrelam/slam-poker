@@ -46,7 +46,7 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
   socket.on("next-round", () => handleNextRound(socket, io));
 
   // Timer-related events
-  socket.on("start-timer", (data) => handleStartTimer(socket, io, data));
+  socket.on("start-timer", () => handleStartTimer(socket, io));
   socket.on("reset-timer", () => handleResetTimer(socket, io));
 
   // User management events

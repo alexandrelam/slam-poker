@@ -206,10 +206,7 @@ export const handleNextRound = withErrorLogging(
     }
 
     // Restart the timer when starting next round
-    const roomWithTimer = roomService.startTimer(
-      roomCode!,
-      updatedRoom.timerDuration,
-    );
+    const roomWithTimer = roomService.startTimer(roomCode!);
 
     // Broadcast updated room state to all users
     RoomStateBroadcaster.broadcastStateChange(
@@ -227,7 +224,6 @@ export const handleNextRound = withErrorLogging(
       io.to(roomCode).emit("timer-started", {
         room: roomWithTimer,
         startedAt: roomWithTimer.timerStartedAt!,
-        duration: roomWithTimer.timerDuration,
       });
     }
 

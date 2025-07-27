@@ -41,7 +41,6 @@ class RoomService {
       kickPermission: "host-only",
       // Timer initialization
       timerStartedAt: null,
-      timerDuration: 300, // 5 minutes default
       timerRunning: false,
     };
 
@@ -119,7 +118,6 @@ class RoomService {
       kickPermission: "host-only",
       // Timer initialization
       timerStartedAt: null,
-      timerDuration: 300, // 5 minutes default
       timerRunning: false,
     };
 
@@ -743,17 +741,15 @@ class RoomService {
   }
 
   // Timer management methods
-  startTimer(roomCode: string, duration: number = 300): Room | null {
+  startTimer(roomCode: string): Room | null {
     const room = this.rooms.get(roomCode);
     if (!room) return null;
 
     room.timerStartedAt = new Date();
-    room.timerDuration = duration;
     room.timerRunning = true;
 
     logger.logUserAction("Timer started", "start_timer", {
       roomCode,
-      duration,
       startedAt: room.timerStartedAt,
     });
 
@@ -766,11 +762,9 @@ class RoomService {
 
     room.timerStartedAt = null;
     room.timerRunning = false;
-    // Keep duration unchanged for next timer start
 
     logger.logUserAction("Timer reset", "reset_timer", {
       roomCode,
-      duration: room.timerDuration,
     });
 
     return room;
@@ -781,11 +775,10 @@ class RoomService {
     if (!room) return null;
 
     room.timerRunning = false;
-    // Keep startedAt for reference if needed
+    // Keep startedAt for reference so we can show final elapsed time
 
     logger.logUserAction("Timer stopped", "stop_timer", {
       roomCode,
-      duration: room.timerDuration,
     });
 
     return room;

@@ -13,13 +13,13 @@ export function Timer({ className }: TimerProps) {
   const { state, actions } = useApp();
   const room = actions.getCurrentRoom();
   const currentUser = state.currentUser;
-  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [, setElapsedTime] = useState<number>(0);
   const [displayTime, setDisplayTime] = useState("00:00");
 
-  // Calculate time left based on server time
+  // Calculate elapsed time based on server time
   useEffect(() => {
-    if (!room || !room.timerRunning || !room.timerStartedAt) {
-      setTimeLeft(0);
+    if (!room || !room.timerStartedAt) {
+      setElapsedTime(0);
       setDisplayTime("00:00");
       return;
     }
@@ -28,22 +28,28 @@ export function Timer({ className }: TimerProps) {
       const now = new Date().getTime();
       const startTime = new Date(room.timerStartedAt!).getTime();
       const elapsed = Math.floor((now - startTime) / 1000);
-      const remaining = Math.max(0, room.timerDuration - elapsed);
 
-      setTimeLeft(remaining);
+      setElapsedTime(elapsed);
 
-      const minutes = Math.floor(remaining / 60);
-      const seconds = remaining % 60;
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = elapsed % 60;
       setDisplayTime(
         `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`,
       );
     };
 
     updateTimer();
-    const interval = setInterval(updateTimer, 1000);
 
-    return () => clearInterval(interval);
-  }, [room?.timerRunning, room?.timerStartedAt, room?.timerDuration]);
+    // Only update in real-time if timer is running
+    let interval: NodeJS.Timeout | null = null;
+    if (room.timerRunning) {
+      interval = setInterval(updateTimer, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [room?.timerRunning, room?.timerStartedAt]);
 
   if (!room || !currentUser) {
     return null;
@@ -67,14 +73,12 @@ export function Timer({ className }: TimerProps) {
 
   const getTimerStatus = () => {
     if (!hasTimer) return "Not started";
-    if (isTimerRunning && timeLeft > 0) return "Running";
-    if (isTimerRunning && timeLeft === 0) return "Time's up!";
+    if (isTimerRunning) return "Running";
     return "Stopped";
   };
 
   const getStatusColor = () => {
     const status = getTimerStatus();
-    if (status === "Time's up!") return "destructive";
     if (status === "Running") return "default";
     if (status === "Stopped") return "secondary";
     return "outline";
@@ -101,9 +105,9 @@ export function Timer({ className }: TimerProps) {
             {hasTimer ? displayTime : "--:--"}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
-            {room.timerDuration
-              ? `${Math.floor(room.timerDuration / 60)}:00 minutes`
-              : "5:00 minutes"}
+            {hasTimer && !isTimerRunning
+              ? `Round took ${displayTime}`
+              : "Elapsed time"}
           </div>
         </div>
 
@@ -140,7 +144,7 @@ export function Timer({ className }: TimerProps) {
             ? room.revealPermission === "host-only"
               ? "Only the host can control the timer"
               : "Waiting for someone to start the timer"
-            : "Timer stops when votes are revealed and restarts on next round"}
+            : "Timer tracks round duration and stops when votes are revealed"}
         </div>
       </CardContent>
     </Card>

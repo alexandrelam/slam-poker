@@ -35,7 +35,6 @@ export interface Room {
   voteStatistics?: VoteStatistics; // computed when votes are revealed
   // Timer state
   timerStartedAt: Date | null;
-  timerDuration: number; // duration in seconds, default 300 (5 minutes)
   timerRunning: boolean;
 }
 

@@ -101,9 +101,9 @@ class SocketService {
     this.socket.emit("next-round");
   }
 
-  startTimer(duration?: number) {
+  startTimer() {
     if (!this.socket) throw new Error("Socket not connected");
-    this.socket.emit("start-timer", { duration });
+    this.socket.emit("start-timer");
   }
 
   resetTimer() {

@@ -15,13 +15,12 @@ import {
 // Start timer handler
 export const handleStartTimer = withErrorLogging(
   "start-timer",
-  (socket: SocketType, io: any, data: { duration?: number }) => {
+  (socket: SocketType, io: any) => {
     const correlationId = correlationService.getSocketCorrelationId(socket);
     const timing = logger.startTiming("start_timer");
 
     logger.logUserAction("Start timer handler started", "start_timer", {
       socketId: socket.id,
-      duration: data.duration,
       correlation_id: correlationId,
     });
 
@@ -54,7 +53,7 @@ export const handleStartTimer = withErrorLogging(
     )
       return;
 
-    const updatedRoom = roomService.startTimer(roomCode!, data.duration || 300);
+    const updatedRoom = roomService.startTimer(roomCode!);
     if (!updatedRoom) {
       logger.forceWarn("Start timer handler: startTimer FAILED", {
         socketId: socket.id,
@@ -77,7 +76,6 @@ export const handleStartTimer = withErrorLogging(
     io.to(roomCode).emit("timer-started", {
       room: updatedRoom,
       startedAt: updatedRoom.timerStartedAt!,
-      duration: updatedRoom.timerDuration,
     });
 
     // Update session tracking
@@ -88,7 +86,6 @@ export const handleStartTimer = withErrorLogging(
       socketId: socket.id,
       userId,
       roomCode,
-      duration: updatedRoom.timerDuration,
       correlation_id: correlationId,
     });
   },
