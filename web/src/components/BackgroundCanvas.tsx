@@ -246,7 +246,7 @@ export function BackgroundCanvas({
 
   // Initialize particles (much fewer)
   const initParticles = () => {
-    const count = quality === "low" ? 8 : quality === "medium" ? 15 : 25;
+    const count = quality === "low" ? 12 : quality === "medium" ? 22 : 35;
     const particles = [];
 
     for (let i = 0; i < count; i++) {
@@ -341,7 +341,7 @@ export function BackgroundCanvas({
       const lightness = isDark ? particle.lightness * 0.8 : particle.lightness;
 
       // Create HSL color with animated hue using cache
-      const finalAlpha = alpha * (isDark ? 0.15 : 0.25);
+      const finalAlpha = alpha * (isDark ? 0.15 : 0.35);
       const hslColor = getHSLColor(
         animatedHue,
         saturation,
@@ -384,7 +384,7 @@ export function BackgroundCanvas({
         ? particle.lightness * 0.7
         : particle.lightness * 0.9;
 
-      const finalAlpha = alpha * (isDark ? 0.1 : 0.2);
+      const finalAlpha = alpha * (isDark ? 0.1 : 0.28);
       const hslColor = getHSLColor(
         animatedHue,
         saturation,
@@ -418,7 +418,7 @@ export function BackgroundCanvas({
       const saturation = isDark ? 30 : 35;
       const lightness = isDark ? 40 : 45;
 
-      const finalAlpha = alpha * (isDark ? 0.08 : 0.15);
+      const finalAlpha = alpha * (isDark ? 0.08 : 0.22);
       const hslColor = getHSLColor(
         particle.hue,
         saturation,
