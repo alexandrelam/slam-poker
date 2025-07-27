@@ -4,7 +4,9 @@ import roomService from "@/services/roomService";
 import userService from "@/services/userService";
 import permissionService from "@/services/permissionService";
 import socketTrackingService from "@/services/socketTrackingService";
+import sessionTrackingService from "@/services/sessionTrackingService";
 import logger from "@/utils/logger";
+import correlationService from "@/utils/correlationService";
 import { SocketErrorHandler, ERROR_MESSAGES } from "@/utils/socketErrors";
 import { RoomStateBroadcaster } from "@/utils/roomStateBroadcast";
 import {
@@ -22,11 +24,15 @@ export const handleJoinRoom = withErrorLogging(
     io: any,
     data: { roomCode: string; userName: string; userId: string },
   ) => {
-    logger.forceInfo("=== JOIN ROOM HANDLER START ===", {
+    const correlationId = correlationService.getSocketCorrelationId(socket);
+    const timing = logger.startTiming("join_room");
+
+    logger.logUserAction("Join room handler started", "join_room", {
       socketId: socket.id,
       requestedRoomCode: data.roomCode,
       requestedUserName: data.userName,
       providedUserId: data.userId,
+      correlation_id: correlationId,
     });
 
     // Validate input data (now includes userId)
@@ -190,14 +196,30 @@ export const handleJoinRoom = withErrorLogging(
             .to(room.code)
             .emit("user-joined", { user: existingUser, room });
 
-          logger.forceInfo("=== JOIN ROOM HANDLER SUCCESS (RECONNECTION) ===", {
-            socketId: socket.id,
+          // Start session tracking for reconnection
+          sessionTrackingService.startSession(
             userId,
-            userName: existingUser.name,
-            roomCode: room.code,
-            wasReconnection: true,
-            finalSocketData: socket.data,
-          });
+            existingUser.name,
+            socket.id,
+            room.code,
+            correlationId,
+            true, // isReconnection
+          );
+
+          // Log reconnection completion with timing
+          logger.endTiming(
+            timing,
+            "Join room handler completed successfully (reconnection)",
+            {
+              socketId: socket.id,
+              userId,
+              userName: existingUser.name,
+              roomCode: room.code,
+              wasReconnection: true,
+              room_size: room.users.length,
+              correlation_id: correlationId,
+            },
+          );
           return;
         }
       }
@@ -320,17 +342,33 @@ export const handleJoinRoom = withErrorLogging(
       excludeSocketId: socket.id, // Don't send to the user who just joined (they got initial state)
     });
 
-    logger.forceInfo("=== JOIN ROOM HANDLER SUCCESS ===", {
-      socketId: socket.id,
-      userId: user.id,
-      userName: user.name,
-      requestedRoomCode: upperRoomCode,
-      actualRoomCode: room.code,
-      roomCodesMatch: room.code === upperRoomCode,
-      isNewRoom: isCreatingNewRoom,
-      isHost: updatedRoom.users[0]?.id === user.id,
-      finalSocketData: socket.data,
-    });
+    // Start session tracking for new user
+    sessionTrackingService.startSession(
+      user.id,
+      user.name,
+      socket.id,
+      room.code,
+      correlationId,
+      false, // isReconnection
+    );
+
+    // Log completion with timing
+    const duration = logger.endTiming(
+      timing,
+      "Join room handler completed successfully",
+      {
+        socketId: socket.id,
+        userId: user.id,
+        userName: user.name,
+        requestedRoomCode: upperRoomCode,
+        actualRoomCode: room.code,
+        roomCodesMatch: room.code === upperRoomCode,
+        isNewRoom: isCreatingNewRoom,
+        isHost: updatedRoom.users[0]?.id === user.id,
+        room_size: updatedRoom.users.length,
+        correlation_id: correlationId,
+      },
+    );
   },
 );
 

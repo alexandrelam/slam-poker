@@ -3,6 +3,7 @@ import roomService from "@/services/roomService";
 import userService from "@/services/userService";
 import permissionService from "@/services/permissionService";
 import socketTrackingService from "@/services/socketTrackingService";
+import sessionTrackingService from "@/services/sessionTrackingService";
 import logger from "@/utils/logger";
 import { SocketErrorHandler } from "@/utils/socketErrors";
 import { RoomStateBroadcaster } from "@/utils/roomStateBroadcast";
@@ -205,6 +206,9 @@ export const handleDisconnect = withErrorLogging(
     socketTrackingService.removeSocketFromAllRooms(socket.id);
 
     if (userId && roomCode) {
+      // End session tracking
+      sessionTrackingService.endSession(userId, reason);
+
       // Remove user from room
       const updatedRoom = roomService.removeUserFromRoom(roomCode, userId);
 

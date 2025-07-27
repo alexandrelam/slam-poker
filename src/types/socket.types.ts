@@ -63,6 +63,7 @@ export interface SocketData {
   userId?: string;
   roomCode?: string;
   userName?: string;
+  correlationId?: string;
 }
 
 export type SocketType = Socket<

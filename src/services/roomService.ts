@@ -14,6 +14,15 @@ import logger from "@/utils/logger";
 
 class RoomService {
   private rooms: Map<string, Room> = new Map();
+  private roomMetrics: Map<
+    string,
+    {
+      peakUsers: number;
+      totalJoins: number;
+      totalVotes: number;
+      lastActivity: Date;
+    }
+  > = new Map();
 
   createRoom(): Room {
     let roomCode: string;
@@ -33,7 +42,33 @@ class RoomService {
     };
 
     this.rooms.set(roomCode, room);
-    logger.forceInfo("Room created with generated code", { roomCode });
+
+    // Initialize room metrics
+    this.roomMetrics.set(roomCode, {
+      peakUsers: 0,
+      totalJoins: 0,
+      totalVotes: 0,
+      lastActivity: new Date(),
+    });
+
+    // Enhanced room creation logging
+    logger.logSystemEvent(
+      "Room created with generated code",
+      "room_cleanup", // Using room_cleanup as generic room operation
+      {
+        roomCode,
+        creation_method: "generated",
+        concurrent_rooms: this.rooms.size,
+        total_active_users: this.getTotalActiveUsers(),
+      },
+    );
+
+    // Log business metric for room creation rate
+    logger.logBusinessMetric("Room created", {
+      room_count: this.rooms.size,
+      creation_method: "generated",
+    });
+
     return room;
   }
 
@@ -42,18 +77,31 @@ class RoomService {
 
     // Check if room already exists
     if (this.rooms.has(roomCode)) {
-      logger.forceWarn("Cannot create room - code already exists", {
-        roomCode,
-      });
+      logger.logError(
+        "Cannot create room - code already exists",
+        null,
+        "validation_error",
+        {
+          roomCode,
+          requestedCode,
+          concurrent_rooms: this.rooms.size,
+        },
+      );
       return null;
     }
 
     // Validate room code format (basic validation)
     if (!roomCode || roomCode.length < 3 || roomCode.length > 10) {
-      logger.forceWarn("Cannot create room - invalid code format", {
-        roomCode,
-        length: roomCode.length,
-      });
+      logger.logError(
+        "Cannot create room - invalid code format",
+        null,
+        "validation_error",
+        {
+          roomCode,
+          requestedCode,
+          length: roomCode.length,
+        },
+      );
       return null;
     }
 
@@ -68,10 +116,34 @@ class RoomService {
     };
 
     this.rooms.set(roomCode, room);
-    logger.forceInfo("Room created with user-specified code", {
-      roomCode,
-      requestedCode,
+
+    // Initialize room metrics
+    this.roomMetrics.set(roomCode, {
+      peakUsers: 0,
+      totalJoins: 0,
+      totalVotes: 0,
+      lastActivity: new Date(),
     });
+
+    // Enhanced room creation logging
+    logger.logSystemEvent(
+      "Room created with user-specified code",
+      "room_cleanup",
+      {
+        roomCode,
+        requestedCode,
+        creation_method: "user_specified",
+        concurrent_rooms: this.rooms.size,
+        total_active_users: this.getTotalActiveUsers(),
+      },
+    );
+
+    // Log business metric for room creation
+    logger.logBusinessMetric("Room created", {
+      room_count: this.rooms.size,
+      creation_method: "user_specified",
+    });
+
     return room;
   }
 
@@ -84,17 +156,47 @@ class RoomService {
     if (!room) return null;
 
     const existingUserIndex = room.users.findIndex((u) => u.id === user.id);
+    const isNewUser = existingUserIndex < 0;
+
     if (existingUserIndex >= 0) {
       room.users[existingUserIndex] = { ...user, isOnline: true };
     } else {
       room.users.push(user);
     }
 
-    logger.info("User added to room", {
+    // Update room metrics
+    const metrics = this.roomMetrics.get(roomCode);
+    if (metrics) {
+      if (isNewUser) {
+        metrics.totalJoins++;
+      }
+      const currentUserCount = room.users.filter((u) => u.isOnline).length;
+      metrics.peakUsers = Math.max(metrics.peakUsers, currentUserCount);
+      metrics.lastActivity = new Date();
+    }
+
+    // Enhanced user addition logging
+    logger.logUserAction("User added to room", "join_room", {
       roomCode,
       userId: user.id,
       userName: user.name,
+      isHost: room.users[0]?.id === user.id,
+      room_size: room.users.length,
+      online_users: room.users.filter((u) => u.isOnline).length,
+      is_reconnection: !isNewUser,
+      room_age_seconds: Math.floor(
+        (Date.now() - room.createdAt.getTime()) / 1000,
+      ),
     });
+
+    // Log business metric for user engagement
+    logger.logBusinessMetric("User joined room", {
+      room_size: room.users.length,
+      concurrent_users: room.users.filter((u) => u.isOnline).length,
+      is_reconnection: !isNewUser,
+      total_rooms: this.rooms.size,
+    });
+
     return room;
   }
 
@@ -103,19 +205,63 @@ class RoomService {
     if (!room) return null;
 
     const userIndex = room.users.findIndex((u) => u.id === userId);
+    const user = room.users[userIndex];
+
     if (userIndex >= 0) {
       // Mark user as offline but preserve their vote if they had one
       room.users[userIndex].isOnline = false;
       // Note: We no longer clear currentVote to allow vote revelation even after disconnect
     }
 
-    if (room.users.every((u) => !u.isOnline)) {
+    // Update room metrics
+    const metrics = this.roomMetrics.get(roomCode);
+    if (metrics) {
+      metrics.lastActivity = new Date();
+    }
+
+    // Check if room should be deleted
+    const onlineUsers = room.users.filter((u) => u.isOnline);
+    if (onlineUsers.length === 0) {
+      const roomAge = Date.now() - room.createdAt.getTime();
+
+      // Log room deletion with comprehensive metrics
+      logger.logSystemEvent("Room deleted - no online users", "room_cleanup", {
+        roomCode,
+        room_duration_ms: roomAge,
+        room_duration_minutes: Math.floor(roomAge / 60000),
+        peak_users: metrics?.peakUsers || 0,
+        total_joins: metrics?.totalJoins || 0,
+        total_votes: metrics?.totalVotes || 0,
+        total_users_ever: room.users.length,
+        final_user_count: room.users.length,
+      });
+
+      // Log business metric for room lifecycle
+      logger.logBusinessMetric("Room deleted", {
+        room_duration_ms: roomAge,
+        peak_users: metrics?.peakUsers || 0,
+        total_joins: metrics?.totalJoins || 0,
+        total_votes: metrics?.totalVotes || 0,
+        remaining_rooms: this.rooms.size - 1,
+      });
+
       this.rooms.delete(roomCode);
-      logger.info("Room deleted - no online users", { roomCode });
+      this.roomMetrics.delete(roomCode);
       return null;
     }
 
-    logger.info("User removed from room", { roomCode, userId });
+    // Log user removal
+    logger.logUserAction("User removed from room", "leave_room", {
+      roomCode,
+      userId,
+      userName: user?.name,
+      remaining_online_users: onlineUsers.length,
+      room_size: room.users.length,
+      room_age_seconds: Math.floor(
+        (Date.now() - room.createdAt.getTime()) / 1000,
+      ),
+    });
+
     return room;
   }
 
@@ -182,6 +328,37 @@ class RoomService {
     }
 
     user.currentVote = vote;
+
+    // Update vote metrics
+    const metrics = this.roomMetrics.get(roomCode);
+    if (metrics) {
+      metrics.totalVotes++;
+      metrics.lastActivity = new Date();
+    }
+
+    // Calculate voting progress and timing
+    const onlineUsers = room.users.filter((u) => u.isOnline);
+    const usersWithVotes = room.users.filter(
+      (u) => u.currentVote !== undefined,
+    );
+    const votingProgress =
+      onlineUsers.length > 0
+        ? (usersWithVotes.length / onlineUsers.length) * 100
+        : 0;
+
+    // Log business metrics for vote casting
+    logger.logBusinessMetric("Vote cast", {
+      room_size: room.users.length,
+      online_users: onlineUsers.length,
+      votes_cast: usersWithVotes.length,
+      voting_progress_percent: Math.round(votingProgress * 100) / 100,
+      is_complete: this.hasAllUsersVoted(room),
+      room_age_minutes: Math.floor(
+        (Date.now() - room.createdAt.getTime()) / 60000,
+      ),
+      total_room_votes: metrics?.totalVotes || 0,
+    });
+
     logger.forceInfo("=== ROOM SERVICE castVote SUCCESS ===", {
       roomCode,
       userId,
@@ -201,6 +378,30 @@ class RoomService {
     // Compute vote statistics when revealing votes
     room.voteStatistics = this.computeVoteStatistics(room);
 
+    const onlineUsers = room.users.filter((u) => u.isOnline);
+    const usersWithVotes = room.users.filter(
+      (u) => u.currentVote !== undefined,
+    );
+    const votingCompletionRate =
+      onlineUsers.length > 0
+        ? (usersWithVotes.length / onlineUsers.length) * 100
+        : 0;
+
+    // Log business metrics for vote revelation
+    logger.logBusinessMetric("Votes revealed", {
+      room_size: room.users.length,
+      online_users: onlineUsers.length,
+      total_votes: room.voteStatistics.totalVotes,
+      voting_completion_rate: Math.round(votingCompletionRate * 100) / 100,
+      vote_average: room.voteStatistics.average,
+      vote_median: room.voteStatistics.median,
+      has_consensus: room.voteStatistics.distribution.length === 1,
+      vote_spread: room.voteStatistics.distribution.length,
+      room_age_minutes: Math.floor(
+        (Date.now() - room.createdAt.getTime()) / 60000,
+      ),
+    });
+
     logger.info("Votes revealed with statistics", {
       roomCode,
       totalVotes: room.voteStatistics.totalVotes,
@@ -214,12 +415,33 @@ class RoomService {
     const room = this.rooms.get(roomCode);
     if (!room) return null;
 
+    const previousVoteCount = room.users.filter(
+      (u) => u.currentVote !== undefined,
+    ).length;
+
     room.users.forEach((user) => {
       user.currentVote = undefined;
     });
     room.votingInProgress = true;
     room.votesRevealed = false;
     room.voteStatistics = undefined; // Clear previous statistics
+
+    const metrics = this.roomMetrics.get(roomCode);
+    if (metrics) {
+      metrics.lastActivity = new Date();
+    }
+
+    // Log business metrics for round reset
+    logger.logBusinessMetric("Next round started", {
+      room_size: room.users.length,
+      online_users: room.users.filter((u) => u.isOnline).length,
+      previous_vote_count: previousVoteCount,
+      total_rounds_so_far:
+        (metrics?.totalVotes || 0) / Math.max(previousVoteCount, 1),
+      room_age_minutes: Math.floor(
+        (Date.now() - room.createdAt.getTime()) / 60000,
+      ),
+    });
 
     logger.info("Next round started", { roomCode });
     return room;
@@ -451,6 +673,65 @@ class RoomService {
 
   getRoomCount(): number {
     return this.rooms.size;
+  }
+
+  // Helper method to get total active users across all rooms
+  private getTotalActiveUsers(): number {
+    let totalUsers = 0;
+    for (const room of this.rooms.values()) {
+      totalUsers += room.users.filter((u) => u.isOnline).length;
+    }
+    return totalUsers;
+  }
+
+  // Get comprehensive room statistics for monitoring
+  getRoomStatistics(): {
+    totalRooms: number;
+    totalActiveUsers: number;
+    averageRoomSize: number;
+    roomsWithVoting: number;
+    peakUsersAcrossRooms: number;
+  } {
+    const stats = {
+      totalRooms: this.rooms.size,
+      totalActiveUsers: 0,
+      averageRoomSize: 0,
+      roomsWithVoting: 0,
+      peakUsersAcrossRooms: 0,
+    };
+
+    for (const [roomCode, room] of this.rooms.entries()) {
+      const onlineUsers = room.users.filter((u) => u.isOnline).length;
+      stats.totalActiveUsers += onlineUsers;
+
+      if (room.votingInProgress) {
+        stats.roomsWithVoting++;
+      }
+
+      const metrics = this.roomMetrics.get(roomCode);
+      if (metrics) {
+        stats.peakUsersAcrossRooms += metrics.peakUsers;
+      }
+    }
+
+    stats.averageRoomSize =
+      stats.totalRooms > 0 ? stats.totalActiveUsers / stats.totalRooms : 0;
+
+    return stats;
+  }
+
+  // Periodic logging of room statistics
+  logRoomStatistics(): void {
+    const stats = this.getRoomStatistics();
+
+    logger.logBusinessMetric("Room statistics snapshot", {
+      total_rooms: stats.totalRooms,
+      total_active_users: stats.totalActiveUsers,
+      average_room_size: Math.round(stats.averageRoomSize * 100) / 100,
+      rooms_with_voting: stats.roomsWithVoting,
+      peak_users_across_rooms: stats.peakUsersAcrossRooms,
+      memory_usage_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+    });
   }
 }
 

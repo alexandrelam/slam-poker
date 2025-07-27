@@ -2,7 +2,9 @@ import { SocketType } from "@/types/socket.types";
 import { FibonacciCard, FIBONACCI_CARDS } from "@/types/room.types";
 import roomService from "@/services/roomService";
 import permissionService from "@/services/permissionService";
+import sessionTrackingService from "@/services/sessionTrackingService";
 import logger from "@/utils/logger";
+import correlationService from "@/utils/correlationService";
 import { SocketErrorHandler } from "@/utils/socketErrors";
 import { RoomStateBroadcaster } from "@/utils/roomStateBroadcast";
 import {
@@ -16,10 +18,13 @@ import {
 export const handleVote = withErrorLogging(
   "vote",
   (socket: SocketType, io: any, data: { vote: FibonacciCard }) => {
-    logger.forceInfo("=== VOTE HANDLER START ===", {
+    const correlationId = correlationService.getSocketCorrelationId(socket);
+    const timing = logger.startTiming("cast_vote");
+
+    logger.logUserAction("Vote handler started", "cast_vote", {
       socketId: socket.id,
-      vote: data.vote,
-      socketData: socket.data,
+      vote: "hidden", // Don't log actual vote for privacy
+      correlation_id: correlationId,
     });
 
     // Check authentication
@@ -104,13 +109,19 @@ export const handleVote = withErrorLogging(
       room: updatedRoom,
     });
 
-    logger.forceInfo("=== VOTE HANDLER SUCCESS ===", {
+    // Update session tracking for vote activity
+    sessionTrackingService.updateActivity(userId!, "vote");
+
+    // Log completion with timing
+    logger.endTiming(timing, "Vote handler completed successfully", {
       socketId: socket.id,
       userId,
       roomCode,
-      vote: "hidden",
-      roomUserCount: updatedRoom.users.length,
-      emittedTo: roomCode,
+      vote: "hidden", // Keep vote hidden for privacy
+      room_size: updatedRoom.users.length,
+      votes_cast: updatedRoom.users.filter((u) => u.currentVote !== undefined)
+        .length,
+      correlation_id: correlationId,
     });
   },
 );

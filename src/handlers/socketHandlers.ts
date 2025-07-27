@@ -1,5 +1,6 @@
 import { SocketType } from "@/types/socket.types";
 import logger from "@/utils/logger";
+import correlationService from "@/utils/correlationService";
 
 // Import modular handlers
 import { handleJoinRoom, handleUpdateRoomSettings } from "./roomHandlers";
@@ -15,6 +16,22 @@ import {
 } from "./userHandlers";
 
 export const handleSocketConnection = (socket: SocketType, io: any) => {
+  // Initialize correlation ID for this socket connection
+  const correlationId = correlationService.setSocketCorrelationId(socket);
+
+  // Log WebSocket connection with enhanced metadata
+  logger.logSystemEvent(
+    "WebSocket connection established",
+    "websocket_connect",
+    {
+      socketId: socket.id,
+      correlation_id: correlationId,
+      client_ip: socket.handshake.address,
+      user_agent: socket.handshake.headers["user-agent"],
+      connection_time: new Date().toISOString(),
+    },
+  );
+
   // Room-related events
   socket.on("join-room", (data) => handleJoinRoom(socket, io, data));
   socket.on("update-room-settings", (data) =>
@@ -29,9 +46,29 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
   // User management events
   socket.on("kick-user", (data) => handleKickUser(socket, io, data));
   socket.on("change-name", (data) => handleChangeName(socket, io, data));
-  socket.on("disconnect", (reason) => handleDisconnect(socket, io, reason));
 
-  logger.info("Socket connection established with modular handlers", {
-    socketId: socket.id,
+  // Enhanced disconnect handler
+  socket.on("disconnect", (reason) => {
+    // Log disconnection with session info
+    logger.logSystemEvent(
+      "WebSocket connection closed",
+      "websocket_disconnect",
+      {
+        socketId: socket.id,
+        disconnect_reason: reason,
+        userId: socket.data.userId,
+        roomCode: socket.data.roomCode,
+        correlation_id: correlationService.getSocketCorrelationId(socket),
+        session_duration_ms: socket.handshake.time
+          ? Date.now() - new Date(socket.handshake.time).getTime()
+          : 0,
+      },
+    );
+
+    // Clean up correlation tracking
+    correlationService.removeSocketCorrelation(socket.id);
+
+    // Call the original disconnect handler
+    handleDisconnect(socket, io, reason);
   });
 };

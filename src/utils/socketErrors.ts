@@ -1,5 +1,8 @@
 import { Socket } from "socket.io";
 import { SocketType } from "@/types/socket.types";
+import logger, { ErrorCategory } from "@/utils/logger";
+import correlationService from "@/utils/correlationService";
+import errorTrackingService from "@/services/errorTrackingService";
 
 // Error message constants
 export const ERROR_MESSAGES = {
@@ -28,23 +31,77 @@ export const ERROR_MESSAGES = {
   ROOM_NO_LONGER_EXISTS: "Room no longer exists",
 } as const;
 
-// Socket error response utilities
+// Socket error response utilities with enhanced logging
 export class SocketErrorHandler {
-  static emitError(socket: SocketType, message: string): void {
+  static emitError(
+    socket: SocketType,
+    message: string,
+    category: ErrorCategory = "system_error",
+    additionalContext: Record<string, any> = {},
+  ): void {
+    const correlationId = correlationService.getSocketCorrelationId(socket);
+
+    // Track error for business metrics
+    errorTrackingService.recordError(
+      category,
+      "websocket_connect", // Default operation type
+      socket.data.userId,
+      socket.data.roomCode,
+      {
+        socketId: socket.id,
+        client_message: message,
+        correlation_id: correlationId,
+        ...additionalContext,
+      },
+    );
+
+    // Log the error with category for Grafana alerting
+    logger.logError(`Socket error: ${message}`, null, category, {
+      socketId: socket.id,
+      userId: socket.data.userId,
+      roomCode: socket.data.roomCode,
+      correlation_id: correlationId,
+      client_message: message,
+      ...additionalContext,
+    });
+
     socket.emit("error", { message });
   }
 
   static emitRoomNotFound(socket: SocketType): void {
+    const correlationId = correlationService.getSocketCorrelationId(socket);
+
+    logger.logError("Room not found error", null, "not_found_error", {
+      socketId: socket.id,
+      userId: socket.data.userId,
+      roomCode: socket.data.roomCode,
+      correlation_id: correlationId,
+    });
+
     socket.emit("room-not-found");
   }
 
   static emitInvalidVote(socket: SocketType): void {
+    const correlationId = correlationService.getSocketCorrelationId(socket);
+
+    logger.logError("Invalid vote submitted", null, "validation_error", {
+      socketId: socket.id,
+      userId: socket.data.userId,
+      roomCode: socket.data.roomCode,
+      correlation_id: correlationId,
+    });
+
     socket.emit("invalid-vote");
   }
 
-  // Common error responses with predefined messages
+  // Common error responses with categorized logging
   static emitAuthenticationError(socket: SocketType): void {
-    this.emitError(socket, ERROR_MESSAGES.NOT_JOINED_TO_ROOM);
+    this.emitError(
+      socket,
+      ERROR_MESSAGES.NOT_JOINED_TO_ROOM,
+      "authentication_error",
+      { reason: "user_not_in_room" },
+    );
   }
 
   static emitPermissionError(
@@ -57,7 +114,11 @@ export class SocketErrorHandler {
       settings: ERROR_MESSAGES.NO_PERMISSION_UPDATE_SETTINGS,
       kick: ERROR_MESSAGES.NO_PERMISSION_KICK_USERS,
     };
-    this.emitError(socket, messageMap[action]);
+
+    this.emitError(socket, messageMap[action], "permission_error", {
+      action,
+      user_role: socket.data.userId ? "participant" : "unknown",
+    });
   }
 
   static emitValidationError(
@@ -70,7 +131,10 @@ export class SocketErrorHandler {
       name: ERROR_MESSAGES.INVALID_NAME_PROVIDED,
       userIdToKick: ERROR_MESSAGES.USER_ID_TO_KICK_REQUIRED,
     };
-    this.emitError(socket, messageMap[field]);
+
+    this.emitError(socket, messageMap[field], "validation_error", {
+      validation_field: field,
+    });
   }
 
   static emitOperationError(
@@ -93,6 +157,26 @@ export class SocketErrorHandler {
       kick: ERROR_MESSAGES.FAILED_TO_KICK_USER,
       changeName: ERROR_MESSAGES.FAILED_TO_CHANGE_NAME,
     };
-    this.emitError(socket, messageMap[operation]);
+
+    this.emitError(socket, messageMap[operation], "system_error", {
+      failed_operation: operation,
+    });
+  }
+
+  // New method for rate limiting errors
+  static emitRateLimitError(socket: SocketType, operation: string): void {
+    this.emitError(
+      socket,
+      `Rate limit exceeded for ${operation}`,
+      "rate_limit_error",
+      { limited_operation: operation },
+    );
+  }
+
+  // New method for network-related errors
+  static emitNetworkError(socket: SocketType, details: string): void {
+    this.emitError(socket, `Network error: ${details}`, "network_error", {
+      network_details: details,
+    });
   }
 }
