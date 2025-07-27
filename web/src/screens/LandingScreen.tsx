@@ -15,7 +15,6 @@ import {
   Users,
   Plus,
   LogIn,
-  Zap,
   AlertCircle,
   Vote,
   Target,
@@ -111,17 +110,10 @@ export function LandingScreen() {
         <div
           className={`text-center space-y-4 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div
-              className={`p-3 rounded-full bg-primary/10 transition-all duration-500 delay-200 ${isVisible ? "opacity-100 -translate-x-0" : "opacity-0 -translate-x-4"}`}
-            >
-              <Zap className="w-10 h-10 text-primary" />
-            </div>
-            <h1
-              className={`text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent transition-all duration-500 delay-300 ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"}`}
-            >
-              SLAM Poker
-            </h1>
+          <div
+            className={`flex items-center justify-center mb-6 transition-all duration-500 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          >
+            <img src="/logo.png" alt="SLAM Poker" className="h-44 w-auto" />
           </div>
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
             Simple, fast agile planning for your team

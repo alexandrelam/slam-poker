@@ -84,12 +84,11 @@ export function RoomHeader({
         <div className="flex items-center justify-between">
           {/* Left side - App title and room code */}
           <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">SLAM Poker</h1>
-              <p className="text-sm text-muted-foreground">
-                Agile Planning Made Simple
-              </p>
-            </div>
+            <img
+              src="/logo.png"
+              alt="SLAM Poker"
+              className="h-24 mx-4 my-2 w-auto"
+            />
 
             <div className="flex items-center gap-2">
               <div className="text-center">

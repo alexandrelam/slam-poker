@@ -11,7 +11,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { Badge } from "../components/ui/badge";
-import { LogIn, Zap, AlertCircle, ArrowLeft } from "lucide-react";
+import { LogIn, AlertCircle, ArrowLeft } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { ConnectionStatus, AppScreen } from "../types";
 import { getStoredUsername, saveUsername } from "../lib/userStorage";
@@ -165,13 +165,8 @@ export function DirectJoinScreen() {
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="w-full max-w-lg space-y-8">
           <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="p-3 rounded-full bg-primary/10">
-                <Zap className="w-10 h-10 text-primary" />
-              </div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                SLAM Poker
-              </h1>
+            <div className="flex items-center justify-center mb-6">
+              <img src="/logo.png" alt="SLAM Poker" className="h-44 w-auto" />
             </div>
             <p className="text-lg text-muted-foreground">
               Joining room{" "}
@@ -228,17 +223,10 @@ export function DirectJoinScreen() {
         <div
           className={`text-center space-y-4 transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div
-              className={`p-3 rounded-full bg-primary/10 transition-all duration-500 delay-200 ${isVisible ? "opacity-100 -translate-x-0" : "opacity-0 -translate-x-4"}`}
-            >
-              <Zap className="w-10 h-10 text-primary" />
-            </div>
-            <h1
-              className={`text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent transition-all duration-500 delay-300 ${isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"}`}
-            >
-              SLAM Poker
-            </h1>
+          <div
+            className={`flex items-center justify-center mb-6 transition-all duration-500 delay-200 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+          >
+            <img src="/logo.png" alt="SLAM Poker" className="h-44 w-auto" />
           </div>
           <p className="text-lg text-muted-foreground max-w-md mx-auto">
             Join room{" "}
