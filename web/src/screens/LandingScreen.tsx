@@ -41,6 +41,13 @@ export function LandingScreen() {
     }
   }, [state.connectionStatus, actions]);
 
+  // Clear any residual errors when landing screen mounts (defensive clearing)
+  useEffect(() => {
+    if (state.error) {
+      actions.setError(null);
+    }
+  }, []);
+
   // Handle URL error parameter
   useEffect(() => {
     const errorParam = searchParams.get("error");
@@ -115,9 +122,6 @@ export function LandingScreen() {
           >
             <img src="/logo.png" alt="SLAM Poker" className="h-44 w-auto" />
           </div>
-          <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            Simple, fast agile planning for your team
-          </p>
           <div className="flex items-center justify-center gap-2 pt-2">
             <Badge
               variant={

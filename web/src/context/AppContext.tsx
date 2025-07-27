@@ -571,8 +571,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     leaveRoomAndNavigateHome: () => {
       try {
+        // Remove socket listeners BEFORE disconnecting to prevent race conditions
+        socketService.removeAllListeners();
+
         // Disconnect from socket (this automatically removes user from room on server)
         socketService.disconnect();
+
+        // Update React state to reflect disconnection
+        dispatch({
+          type: "SET_CONNECTION_STATUS",
+          payload: ConnectionStatus.DISCONNECTED,
+        });
 
         // Reset to landing page
         dispatch({ type: "RESET_TO_LANDING" });
