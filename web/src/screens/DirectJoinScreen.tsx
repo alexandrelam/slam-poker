@@ -164,7 +164,7 @@ export function DirectJoinScreen() {
 
   if (shouldShowAutoJoinLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6">
         <div className="w-full max-w-lg space-y-8">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center mb-6">
@@ -186,7 +186,7 @@ export function DirectJoinScreen() {
   // If there's a room code error, show it prominently
   if (roomCodeError) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6">
         <div className="w-full max-w-lg">
           <Card className="border-2 border-destructive/50 shadow-lg">
             <CardHeader className="text-center">
@@ -219,7 +219,7 @@ export function DirectJoinScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-lg space-y-8">
         {/* Header */}
         <div

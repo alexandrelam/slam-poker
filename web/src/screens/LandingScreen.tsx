@@ -111,7 +111,7 @@ export function LandingScreen() {
   const hasConnectionError = state.connectionStatus === ConnectionStatus.ERROR;
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-lg space-y-8">
         {/* Header */}
         <div
