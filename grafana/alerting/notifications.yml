@@ -1,0 +1,245 @@
+apiVersion: 1
+
+# Notification policies define how alerts are routed to different channels
+notification_policies:
+  - orgId: 1
+    receiver: web.hook.default
+    group_by:
+      - grafana_folder
+      - alertname
+    group_wait: 10s
+    group_interval: 5m
+    repeat_interval: 12h
+    routes:
+      # Critical alerts route to multiple channels immediately
+      - receiver: critical-alerts
+        matchers:
+          - severity = critical
+        group_wait: 0s
+        group_interval: 1m
+        repeat_interval: 2h
+
+      # Warning alerts with longer intervals
+      - receiver: warning-alerts
+        matchers:
+          - severity = warning
+        group_wait: 30s
+        group_interval: 10m
+        repeat_interval: 6h
+
+      # Business critical alerts to specific teams
+      - receiver: business-critical-alerts
+        matchers:
+          - category = business-critical
+        group_wait: 0s
+        group_interval: 5m
+        repeat_interval: 4h
+
+      # Error-specific routing
+      - receiver: error-alerts
+        matchers:
+          - category =~ "errors|error-spike|system-errors"
+        group_wait: 0s
+        group_interval: 2m
+        repeat_interval: 3h
+
+# Contact points define where notifications are sent
+contactPoints:
+  - orgId: 1
+    name: critical-alerts
+    receivers:
+      # Slack for immediate critical alerts
+      - uid: slack-critical
+        type: slack
+        settings:
+          url: ${SLACK_WEBHOOK_URL_CRITICAL}
+          channel: "#slam-poker-critical"
+          username: "SLAM Poker Alerts"
+          title: "🚨 CRITICAL: {{ .GroupLabels.alertname }}"
+          text: |
+            {{ range .Alerts }}
+            **{{ .Annotations.summary }}**
+            {{ .Annotations.description }}
+
+            **Service:** {{ .Labels.service }}
+            **Severity:** {{ .Labels.severity }}
+            **Category:** {{ .Labels.category }}
+
+            [Runbook]({{ .Annotations.runbook_url }}) | [Silence Alert]({{ .SilenceURL }})
+            {{ end }}
+          iconEmoji: ":rotating_light:"
+
+      # PagerDuty for critical system issues
+      - uid: pagerduty-critical
+        type: pagerduty
+        settings:
+          integrationKey: ${PAGERDUTY_INTEGRATION_KEY}
+          severity: critical
+          customDetails:
+            service: "{{ .GroupLabels.service }}"
+            category: "{{ .GroupLabels.category }}"
+            runbook: "{{ .Annotations.runbook_url }}"
+
+      # Email for critical alerts
+      - uid: email-critical
+        type: email
+        settings:
+          addresses:
+            - ops-team@company.com
+            - engineering-lead@company.com
+          subject: "🚨 CRITICAL ALERT: SLAM Poker - {{ .GroupLabels.alertname }}"
+          html: |
+            <h2>Critical Alert: {{ .GroupLabels.alertname }}</h2>
+            {{ range .Alerts }}
+            <div style="border-left: 4px solid #dc3545; padding-left: 15px; margin: 10px 0;">
+              <h3>{{ .Annotations.summary }}</h3>
+              <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+              <p><strong>Service:</strong> {{ .Labels.service }}</p>
+              <p><strong>Severity:</strong> {{ .Labels.severity }}</p>
+              <p><strong>Category:</strong> {{ .Labels.category }}</p>
+              <p><a href="{{ .Annotations.runbook_url }}">📖 Runbook</a> | <a href="{{ .SilenceURL }}">🔇 Silence</a></p>
+            </div>
+            {{ end }}
+
+  - orgId: 1
+    name: warning-alerts
+    receivers:
+      # Slack for warnings
+      - uid: slack-warnings
+        type: slack
+        settings:
+          url: ${SLACK_WEBHOOK_URL_WARNINGS}
+          channel: "#slam-poker-alerts"
+          username: "SLAM Poker Monitoring"
+          title: "⚠️ WARNING: {{ .GroupLabels.alertname }}"
+          text: |
+            {{ range .Alerts }}
+            **{{ .Annotations.summary }}**
+            {{ .Annotations.description }}
+
+            **Service:** {{ .Labels.service }}
+            **Category:** {{ .Labels.category }}
+
+            [Runbook]({{ .Annotations.runbook_url }}) | [Silence Alert]({{ .SilenceURL }})
+            {{ end }}
+          iconEmoji: ":warning:"
+
+      # Email for warnings (less frequent)
+      - uid: email-warnings
+        type: email
+        settings:
+          addresses:
+            - ops-team@company.com
+          subject: "⚠️ WARNING: SLAM Poker - {{ .GroupLabels.alertname }}"
+
+  - orgId: 1
+    name: business-critical-alerts
+    receivers:
+      # Slack for business team
+      - uid: slack-business
+        type: slack
+        settings:
+          url: ${SLACK_WEBHOOK_URL_BUSINESS}
+          channel: "#slam-poker-business"
+          username: "SLAM Poker Business Alerts"
+          title: "📊 BUSINESS IMPACT: {{ .GroupLabels.alertname }}"
+          text: |
+            {{ range .Alerts }}
+            **{{ .Annotations.summary }}**
+            {{ .Annotations.description }}
+
+            **Impact Category:** {{ .Labels.category }}
+            **Service:** {{ .Labels.service }}
+
+            [Runbook]({{ .Annotations.runbook_url }}) | [Dashboard](https://grafana.company.com/d/slam-poker-business-intelligence)
+            {{ end }}
+          iconEmoji: ":chart_with_downwards_trend:"
+
+      # Teams notification for product team
+      - uid: teams-business
+        type: teams
+        settings:
+          url: ${TEAMS_WEBHOOK_URL}
+          title: "SLAM Poker Business Alert"
+          sectionTitle: "{{ .GroupLabels.alertname }}"
+
+  - orgId: 1
+    name: error-alerts
+    receivers:
+      # Slack for engineering team
+      - uid: slack-errors
+        type: slack
+        settings:
+          url: ${SLACK_WEBHOOK_URL_ENGINEERING}
+          channel: "#slam-poker-errors"
+          username: "SLAM Poker Error Monitor"
+          title: "🐛 ERROR ALERT: {{ .GroupLabels.alertname }}"
+          text: |
+            {{ range .Alerts }}
+            **{{ .Annotations.summary }}**
+            {{ .Annotations.description }}
+
+            **Error Category:** {{ .Labels.category }}
+            **Service:** {{ .Labels.service }}
+
+            [Runbook]({{ .Annotations.runbook_url }}) | [Error Dashboard](https://grafana.company.com/d/slam-poker-error-analysis)
+            {{ end }}
+          iconEmoji: ":bug:"
+
+  - orgId: 1
+    name: web.hook.default
+    receivers:
+      # Default webhook for unmatched alerts
+      - uid: default-webhook
+        type: webhook
+        settings:
+          url: ${DEFAULT_WEBHOOK_URL}
+          httpMethod: POST
+          maxAlerts: 0
+
+# Mute timings for scheduled maintenance windows
+muteTimes:
+  - orgId: 1
+    name: maintenance-window
+    time_intervals:
+      - times:
+          - start_time: "02:00"
+            end_time: "04:00"
+        weekdays:
+          - "sunday"
+        months:
+          - "1:12" # All months
+
+  - orgId: 1
+    name: business-hours-only
+    time_intervals:
+      - times:
+          - start_time: "09:00"
+            end_time: "17:00"
+        weekdays:
+          - "monday:friday"
+        location: "America/New_York"
+
+# Templates for custom alert formatting
+templates:
+  - name: slam-poker-default
+    template: |
+      {{ define "slam-poker.title" }}
+      [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] 
+      {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}
+      ({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}
+      {{ end }}
+
+      {{ define "slam-poker.text" }}
+      {{ range .Alerts }}
+      **Alert:** {{ .Annotations.summary }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
+
+      **Description:** {{ .Annotations.description }}
+
+      **Details:**
+      {{ range .Labels.SortedPairs }} • {{ .Name }}: {{ .Value }}
+      {{ end }}
+      {{ if .Annotations.runbook_url }}
+      **Runbook:** {{ .Annotations.runbook_url }}{{ end }}
+      {{ end }}
+      {{ end }}
