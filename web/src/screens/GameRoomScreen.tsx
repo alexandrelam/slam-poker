@@ -227,7 +227,7 @@ export function GameRoomScreen() {
                   <Button
                     onClick={handleNextRound}
                     disabled={!canStartNextRound || state.isLoading}
-                    variant="secondary"
+                    variant={room.votesRevealed ? "default" : "secondary"}
                     className="flex-1"
                   >
                     <RotateCcw className="w-4 h-4 mr-2" />
