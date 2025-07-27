@@ -1,7 +1,7 @@
 import { Card } from "./ui/card";
 import { cn } from "../lib/utils";
 import { Check } from "lucide-react";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, memo } from "react";
 import type { FibonacciCard } from "../types";
 
 // Color mapping function to assign unique hue ranges to each card
@@ -31,7 +31,7 @@ interface VotingCardProps {
   className?: string;
 }
 
-export function VotingCard({
+export const VotingCard = memo(function VotingCard({
   value,
   isSelected = false,
   isDisabled = false,
@@ -49,24 +49,35 @@ export function VotingCard({
     scale: 1,
     translateZ: 0,
   });
+  const mouseAnimationRef = useRef<number | null>(null);
   // Subtle floating animation when not hovered
   useEffect(() => {
     if (isHovered || isDisabled) return;
 
-    const floatInterval = setInterval(() => {
+    let animationFrameId: number;
+
+    const animate = () => {
       // Double-check state to prevent conflicts
       if (!isHovered && !isDisabled) {
+        const now = Date.now();
         setTransforms({
-          rotateX: Math.sin(Date.now() * 0.001) * 2,
-          rotateY: Math.cos(Date.now() * 0.0015) * 2,
-          rotateZ: Math.sin(Date.now() * 0.0008) * 1,
-          translateZ: Math.sin(Date.now() * 0.002) * 3 + 3,
+          rotateX: Math.sin(now * 0.001) * 2,
+          rotateY: Math.cos(now * 0.0015) * 2,
+          rotateZ: Math.sin(now * 0.0008) * 1,
+          translateZ: Math.sin(now * 0.002) * 3 + 3,
           scale: 1, // Always keep scale at 1 for floating animation
         });
+        animationFrameId = requestAnimationFrame(animate);
       }
-    }, 50);
+    };
 
-    return () => clearInterval(floatInterval);
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, [isHovered, isDisabled]);
 
   const handleClick = () => {
@@ -83,6 +94,12 @@ export function VotingCard({
     setIsHovered(false);
     setMousePosition({ x: 0, y: 0 });
 
+    // Cancel any pending mouse animation frame
+    if (mouseAnimationRef.current !== null) {
+      cancelAnimationFrame(mouseAnimationRef.current);
+      mouseAnimationRef.current = null;
+    }
+
     // Immediately reset scale to prevent cards staying enlarged
     setTransforms({
       rotateX: 0,
@@ -97,41 +114,135 @@ export function VotingCard({
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!cardRef.current || isDisabled) return;
 
-      const rect = cardRef.current.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
+      // Throttle mouse move events using requestAnimationFrame
+      if (mouseAnimationRef.current !== null) return;
 
-      const mouseX = e.clientX - centerX;
-      const mouseY = e.clientY - centerY;
+      mouseAnimationRef.current = requestAnimationFrame(() => {
+        if (!cardRef.current || isDisabled) {
+          mouseAnimationRef.current = null;
+          return;
+        }
 
-      // Normalize to -1 to 1 range
-      const normalizedX = mouseX / (rect.width / 2);
-      const normalizedY = mouseY / (rect.height / 2);
+        const rect = cardRef.current.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
 
-      // Calculate dramatic 3D rotation for enhanced visibility
-      const rotateY = normalizedX * 30; // max 30 degrees for dramatic effect
-      const rotateX = -normalizedY * 30; // negative for natural feel
-      const rotateZ = (normalizedX + normalizedY) * 5; // subtle Z rotation for complexity
+        const mouseX = e.clientX - centerX;
+        const mouseY = e.clientY - centerY;
 
-      setMousePosition({ x: normalizedX, y: normalizedY });
-      setTransforms({
-        rotateX,
-        rotateY,
-        rotateZ,
-        scale: 1.25, // Moderate scale increase for better proportions
-        translateZ: 50, // Lift card off surface
+        // Normalize to -1 to 1 range
+        const normalizedX = mouseX / (rect.width / 2);
+        const normalizedY = mouseY / (rect.height / 2);
+
+        // Calculate dramatic 3D rotation for enhanced visibility
+        const rotateY = normalizedX * 30; // max 30 degrees for dramatic effect
+        const rotateX = -normalizedY * 30; // negative for natural feel
+        const rotateZ = (normalizedX + normalizedY) * 5; // subtle Z rotation for complexity
+
+        setMousePosition({ x: normalizedX, y: normalizedY });
+        setTransforms({
+          rotateX,
+          rotateY,
+          rotateZ,
+          scale: 1.25, // Moderate scale increase for better proportions
+          translateZ: 50, // Lift card off surface
+        });
+
+        mouseAnimationRef.current = null;
       });
     },
     [isDisabled],
   );
 
-  // Calculate holographic gradient position based on mouse
-  const gradientX = ((mousePosition.x + 1) / 2) * 100; // Convert -1,1 to 0,100
-  const gradientY = ((mousePosition.y + 1) / 2) * 100;
+  // Memoize expensive gradient calculations
+  const gradientCalculations = useMemo(() => {
+    const gradientX = ((mousePosition.x + 1) / 2) * 100; // Convert -1,1 to 0,100
+    const gradientY = ((mousePosition.y + 1) / 2) * 100;
+    const baseHue = getCardHue(value);
+    const mouseHueShift = (gradientX + gradientY) * 0.5; // Mouse adds variation across spectrum
 
-  // Get card-specific base hue offset for rainbow rotation
-  const baseHue = getCardHue(value);
-  const mouseHueShift = (gradientX + gradientY) * 0.5; // Mouse adds variation across spectrum
+    return { gradientX, gradientY, baseHue, mouseHueShift };
+  }, [mousePosition.x, mousePosition.y, value]);
+
+  const { gradientX, gradientY, baseHue, mouseHueShift } = gradientCalculations;
+
+  // Memoize complex holographic background calculations
+  const holographicStyles = useMemo(() => {
+    if (!isHovered || isDisabled) return {};
+
+    return {
+      background: `
+        radial-gradient(circle at ${gradientX}% ${gradientY}%, 
+          hsla(${baseHue + mouseHueShift}deg, 100%, 85%, 0.5) 0%,
+          hsla(${baseHue + mouseHueShift + 60}deg, 100%, 80%, 0.4) 25%,
+          hsla(${baseHue + mouseHueShift + 120}deg, 95%, 70%, 0.3) 50%,
+          hsla(${baseHue + mouseHueShift + 180}deg, 90%, 75%, 0.2) 75%,
+          transparent 90%
+        ),
+        linear-gradient(135deg, 
+          hsla(${baseHue + 45}deg, 100%, 85%, 0.6),
+          hsla(${baseHue + 225}deg, 95%, 75%, 0.4)
+        )
+      `,
+      backdropFilter: "blur(0.8px) saturate(1.5)",
+      boxShadow: `
+        ${transforms.rotateY * 1.5}px ${transforms.rotateX * 1.5}px 40px rgba(255, 255, 255, 0.15),
+        ${transforms.rotateY * 0.8}px ${transforms.rotateX * 0.8}px 20px rgba(255, 255, 255, 0.1),
+        0 0 60px rgba(${Math.abs(transforms.rotateY) * 6 + 100}, ${Math.abs(transforms.rotateX) * 6 + 150}, 255, 0.4),
+        0 0 30px rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.1)
+      `,
+    };
+  }, [
+    isHovered,
+    isDisabled,
+    gradientX,
+    gradientY,
+    baseHue,
+    mouseHueShift,
+    transforms.rotateX,
+    transforms.rotateY,
+  ]);
+
+  // Memoize selected state background calculations
+  const selectedStyles = useMemo(() => {
+    if (!isSelected || isRevealed) return {};
+
+    return {
+      backdropFilter: "blur(0.5px) saturate(1.3)",
+      background: `
+        radial-gradient(circle at 30% 30%, 
+          hsla(${baseHue}deg, 100%, 85%, 0.6) 0%,
+          hsla(${baseHue + 60}deg, 100%, 80%, 0.5) 25%,
+          hsla(${baseHue + 120}deg, 95%, 75%, 0.4) 50%,
+          hsla(${baseHue + 180}deg, 90%, 80%, 0.3) 75%,
+          hsla(${baseHue + 240}deg, 95%, 85%, 0.2) 100%
+        ),
+        radial-gradient(circle at 70% 70%, 
+          hsla(${baseHue + 180}deg, 100%, 85%, 0.5) 0%,
+          hsla(${baseHue + 240}deg, 100%, 80%, 0.4) 30%,
+          hsla(${baseHue + 300}deg, 95%, 75%, 0.3) 60%,
+          transparent 100%
+        ),
+        linear-gradient(135deg, 
+          hsla(${baseHue + 30}deg, 100%, 85%, 0.4),
+          hsla(${baseHue + 120}deg, 95%, 80%, 0.3),
+          hsla(${baseHue + 210}deg, 95%, 75%, 0.3),
+          hsla(${baseHue + 300}deg, 100%, 80%, 0.2)
+        )
+      `,
+      border: `4px solid hsl(${baseHue}deg, 100%, 60%)`,
+      boxShadow: `
+        0 0 40px hsla(${baseHue}deg, 100%, 70%, 0.3),
+        0 0 80px hsla(${baseHue + 120}deg, 100%, 70%, 0.2),
+        0 8px 32px rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+        0 0 20px hsla(${baseHue}deg, 100%, 60%, 0.6)
+      `,
+    };
+  }, [isSelected, isRevealed, baseHue]);
 
   return (
     <div
@@ -171,67 +282,9 @@ export function VotingCard({
             ? "none"
             : `rotateX(${transforms.rotateX}deg) rotateY(${transforms.rotateY}deg) rotateZ(${transforms.rotateZ}deg) translateZ(${transforms.translateZ}px) scale(${transforms.scale})`,
           transformStyle: "preserve-3d",
-          // Holographic effects for hovered cards
-          ...(isHovered &&
-            !isDisabled && {
-              background: `
-                radial-gradient(circle at ${gradientX}% ${gradientY}%, 
-                  hsla(${baseHue + mouseHueShift}deg, 100%, 85%, 0.5) 0%,
-                  hsla(${baseHue + mouseHueShift + 60}deg, 100%, 80%, 0.4) 25%,
-                  hsla(${baseHue + mouseHueShift + 120}deg, 95%, 70%, 0.3) 50%,
-                  hsla(${baseHue + mouseHueShift + 180}deg, 90%, 75%, 0.2) 75%,
-                  transparent 90%
-                ),
-                linear-gradient(135deg, 
-                  hsla(${baseHue + 45}deg, 100%, 85%, 0.6),
-                  hsla(${baseHue + 225}deg, 95%, 75%, 0.4)
-                )
-              `,
-              backdropFilter: "blur(0.8px) saturate(1.5)",
-              boxShadow: `
-                ${transforms.rotateY * 1.5}px ${transforms.rotateX * 1.5}px 40px rgba(255, 255, 255, 0.15),
-                ${transforms.rotateY * 0.8}px ${transforms.rotateX * 0.8}px 20px rgba(255, 255, 255, 0.1),
-                0 0 60px rgba(${Math.abs(transforms.rotateY) * 6 + 100}, ${Math.abs(transforms.rotateX) * 6 + 150}, 255, 0.4),
-                0 0 30px rgba(255, 255, 255, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5),
-                inset 0 -1px 0 rgba(255, 255, 255, 0.1)
-              `,
-            }),
-          // Subtle rainbow holographic effects for selected cards (reduced opacity for readability)
-          ...(isSelected &&
-            !isRevealed && {
-              backdropFilter: "blur(0.5px) saturate(1.3)",
-              background: `
-                radial-gradient(circle at 30% 30%, 
-                  hsla(${baseHue}deg, 100%, 85%, 0.6) 0%,
-                  hsla(${baseHue + 60}deg, 100%, 80%, 0.5) 25%,
-                  hsla(${baseHue + 120}deg, 95%, 75%, 0.4) 50%,
-                  hsla(${baseHue + 180}deg, 90%, 80%, 0.3) 75%,
-                  hsla(${baseHue + 240}deg, 95%, 85%, 0.2) 100%
-                ),
-                radial-gradient(circle at 70% 70%, 
-                  hsla(${baseHue + 180}deg, 100%, 85%, 0.5) 0%,
-                  hsla(${baseHue + 240}deg, 100%, 80%, 0.4) 30%,
-                  hsla(${baseHue + 300}deg, 95%, 75%, 0.3) 60%,
-                  transparent 100%
-                ),
-                linear-gradient(135deg, 
-                  hsla(${baseHue + 30}deg, 100%, 85%, 0.4),
-                  hsla(${baseHue + 120}deg, 95%, 80%, 0.3),
-                  hsla(${baseHue + 210}deg, 95%, 75%, 0.3),
-                  hsla(${baseHue + 300}deg, 100%, 80%, 0.2)
-                )
-              `,
-              border: `4px solid hsl(${baseHue}deg, 100%, 60%)`,
-              boxShadow: `
-                0 0 40px hsla(${baseHue}deg, 100%, 70%, 0.3),
-                0 0 80px hsla(${baseHue + 120}deg, 100%, 70%, 0.2),
-                0 8px 32px rgba(255, 255, 255, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4),
-                inset 0 -1px 0 rgba(255, 255, 255, 0.1),
-                0 0 20px hsla(${baseHue}deg, 100%, 60%, 0.6)
-              `,
-            }),
+          // Use memoized styles for better performance
+          ...holographicStyles,
+          ...selectedStyles,
         }}
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
@@ -311,64 +364,29 @@ export function VotingCard({
           />
         )}
 
-        {/* Holographic overlay effect with parallax */}
+        {/* Optimized single holographic overlay */}
         {isHovered && !isDisabled && (
-          <>
-            {/* Background layer - slower movement */}
-            <div
-              className="absolute inset-0 rounded-md opacity-40 mix-blend-soft-light pointer-events-none"
-              style={{
-                background: `
-                conic-gradient(from ${(gradientX + gradientY) * 1.5 + baseHue}deg at ${50 + gradientX * 0.3}% ${50 + gradientY * 0.3}%,
-                  hsl(${baseHue + 0}, 100%, 85%) 0deg,
-                  hsl(${baseHue + 60}, 100%, 85%) 60deg,
-                  hsl(${baseHue + 120}, 100%, 85%) 120deg,
-                  hsl(${baseHue + 180}, 100%, 85%) 180deg,
-                  hsl(${baseHue + 240}, 100%, 85%) 240deg,
-                  hsl(${baseHue + 300}, 100%, 85%) 300deg,
-                  hsl(${baseHue + 360}, 100%, 85%) 360deg
-                )
-              `,
-                transform: `translateX(${transforms.rotateY * 0.3}px) translateY(${transforms.rotateX * 0.3}px)`,
-              }}
-            />
-
-            {/* Foreground layer - faster movement */}
-            <div
-              className="absolute inset-0 rounded-md opacity-70 mix-blend-overlay pointer-events-none"
-              style={{
-                background: `
-                conic-gradient(from ${(gradientX + gradientY) * 3 + baseHue}deg at ${gradientX}% ${gradientY}%,
-                  hsl(${baseHue + 0}, 100%, 75%) 0deg,
-                  hsl(${baseHue + 60}, 100%, 75%) 60deg,
-                  hsl(${baseHue + 120}, 100%, 75%) 120deg,
-                  hsl(${baseHue + 180}, 100%, 75%) 180deg,
-                  hsl(${baseHue + 240}, 100%, 75%) 240deg,
-                  hsl(${baseHue + 300}, 100%, 75%) 300deg,
-                  hsl(${baseHue + 360}, 100%, 75%) 360deg
-                )
-              `,
-                transform: `translateX(${transforms.rotateY * 0.8}px) translateY(${transforms.rotateX * 0.8}px)`,
-              }}
-            />
-
-            {/* Shine effect that follows mouse */}
-            <div
-              className="absolute inset-0 rounded-md opacity-30 mix-blend-plus-lighter pointer-events-none"
-              style={{
-                background: `
+          <div
+            className="absolute inset-0 rounded-md opacity-50 mix-blend-overlay pointer-events-none"
+            style={{
+              background: `
+                conic-gradient(from ${(gradientX + gradientY) * 2 + baseHue}deg at ${gradientX}% ${gradientY}%,
+                  hsl(${baseHue + 0}, 100%, 80%) 0deg,
+                  hsl(${baseHue + 120}, 100%, 80%) 120deg,
+                  hsl(${baseHue + 240}, 100%, 80%) 240deg,
+                  hsl(${baseHue + 360}, 100%, 80%) 360deg
+                ),
                 radial-gradient(circle at ${gradientX}% ${gradientY}%, 
-                  rgba(255, 255, 255, 0.8) 0%,
-                  rgba(255, 255, 255, 0.4) 20%,
-                  transparent 60%
+                  rgba(255, 255, 255, 0.6) 0%,
+                  rgba(255, 255, 255, 0.2) 30%,
+                  transparent 70%
                 )
               `,
-                transform: `translateX(${transforms.rotateY * 1.2}px) translateY(${transforms.rotateX * 1.2}px)`,
-              }}
-            />
-          </>
+              transform: `translateX(${transforms.rotateY * 0.5}px) translateY(${transforms.rotateX * 0.5}px)`,
+            }}
+          />
         )}
       </Card>
     </div>
   );
-}
+});
