@@ -6,6 +6,10 @@ interface Config {
   port: number;
   nodeEnv: string;
   corsOrigin: string | string[];
+  loki: {
+    url: string;
+    enabled: boolean;
+  };
 }
 
 const config: Config = {
@@ -14,6 +18,10 @@ const config: Config = {
   corsOrigin: process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
     : ["http://localhost:3000", "http://localhost:5173"],
+  loki: {
+    url: process.env.LOKI_URL || "",
+    enabled: process.env.LOKI_ENABLED === "true" && !!process.env.LOKI_URL,
+  },
 };
 
 export default config;

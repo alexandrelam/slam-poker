@@ -79,6 +79,8 @@ docker-compose logs -f slam-poker
 - `PORT=3001` - Server port
 - `NODE_ENV=production` - Environment
 - `CORS_ORIGIN=*` - CORS allowed origins
+- `LOKI_URL=http://192.168.1.100:3100` - Loki server URL for log ingestion
+- `LOKI_ENABLED=true` - Enable/disable Loki log transport (falls back to console-only if false or URL not configured)
 
 ### Frontend (`web/.env.development` / `web/.env.production`)
 
