@@ -47,6 +47,8 @@ export function BackgroundCanvas({
   // Performance monitoring
   const performanceMonitor = useRef(new PerformanceMonitor());
   const [quality, setQuality] = useState<"high" | "medium" | "low">("high");
+  const [degradationLevel, setDegradationLevel] = useState(0); // 0-4 levels of degradation
+  const lastDegradationChange = useRef(0);
 
   // Reduced particle system
   const particlesRef = useRef<
@@ -58,12 +60,45 @@ export function BackgroundCanvas({
       life: number;
       maxLife: number;
       size: number;
+      hue: number;
+      saturation: number;
+      lightness: number;
     }[]
   >([]);
 
   const startTimeRef = useRef<number>(Date.now());
   const lastFrameTimeRef = useRef<number>(0);
   const noiseRef = useRef<NoiseGenerator | null>(null);
+
+  // Color cache for performance
+  const colorCache = useRef<Map<string, string>>(new Map());
+  const lastCacheClear = useRef<number>(0);
+
+  // Optimized color generation with caching
+  const getHSLColor = (
+    hue: number,
+    saturation: number,
+    lightness: number,
+    alpha: number,
+  ): string => {
+    const key = `${Math.floor(hue)}-${Math.floor(saturation)}-${Math.floor(lightness)}-${Math.floor(alpha * 100)}`;
+
+    if (colorCache.current.has(key)) {
+      return colorCache.current.get(key)!;
+    }
+
+    const color = `hsla(${Math.floor(hue)}, ${Math.floor(saturation)}%, ${Math.floor(lightness)}%, ${alpha})`;
+
+    // Clear cache every 10 seconds to prevent memory leaks
+    const now = Date.now();
+    if (now - lastCacheClear.current > 10000) {
+      colorCache.current.clear();
+      lastCacheClear.current = now;
+    }
+
+    colorCache.current.set(key, color);
+    return color;
+  };
 
   // Device capability detection
   const getDeviceQuality = (): "high" | "medium" | "low" => {
@@ -222,7 +257,10 @@ export function BackgroundCanvas({
         vy: (Math.random() - 0.5) * 0.5,
         life: Math.random() * 300 + 200,
         maxLife: Math.random() * 300 + 200,
-        size: Math.random() * 2 + 1,
+        size: Math.random() * 3 + 1,
+        hue: Math.random() * 360, // Random starting hue (0-360)
+        saturation: 70 + Math.random() * 30, // High saturation (70-100%)
+        lightness: 50 + Math.random() * 20, // Medium-bright lightness (50-70%)
       });
     }
 
@@ -230,35 +268,53 @@ export function BackgroundCanvas({
   };
 
   const initializeCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    try {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2x for performance
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2x for performance
 
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-    ctx.scale(dpr, dpr);
+      ctx.scale(dpr, dpr);
 
-    // Initialize systems
-    noiseRef.current = new NoiseGenerator(12345);
+      // Initialize systems
+      noiseRef.current = new NoiseGenerator(12345);
 
-    // Create pre-rendered textures
-    backgroundTextureRef.current = createBackgroundTexture(
-      rect.width,
-      rect.height,
-    );
-    noiseTextureRef.current = createNoiseTexture(rect.width, rect.height);
+      // Create pre-rendered textures with error handling
+      try {
+        backgroundTextureRef.current = createBackgroundTexture(
+          rect.width,
+          rect.height,
+        );
+      } catch (error) {
+        console.warn("Failed to create background texture:", error);
+        backgroundTextureRef.current = null;
+      }
 
-    // Initialize particles
-    particlesRef.current = initParticles();
+      try {
+        noiseTextureRef.current = createNoiseTexture(rect.width, rect.height);
+      } catch (error) {
+        console.warn("Failed to create noise texture:", error);
+        noiseTextureRef.current = null;
+      }
 
-    startTimeRef.current = Date.now();
-    setIsInitialized(true);
+      // Initialize particles
+      particlesRef.current = initParticles();
+
+      startTimeRef.current = Date.now();
+      setIsInitialized(true);
+    } catch (error) {
+      console.error("Failed to initialize canvas:", error);
+      // Set a fallback state - keep the background visible but with minimal functionality
+      setDegradationLevel(4);
+      setIsInitialized(true);
+    }
   };
 
   const drawParticles = (ctx: CanvasRenderingContext2D) => {
@@ -268,18 +324,109 @@ export function BackgroundCanvas({
     ctx.save();
     ctx.globalCompositeOperation = "screen";
 
-    // Batch particle rendering
+    const time = (Date.now() - startTimeRef.current) * 0.001;
+
+    // Batch particle rendering with rainbow colors
     for (const particle of particles) {
       const alpha = particle.life / particle.maxLife;
       if (alpha < 0.1) continue; // Skip nearly invisible particles
 
-      ctx.globalAlpha = alpha * (isDark ? 0.4 : 0.2);
-      ctx.fillStyle = isDark
-        ? "rgba(147, 51, 234, 1)"
-        : "rgba(147, 51, 234, 0.8)";
+      // Animate hue over time for rainbow effect (slower animation for better performance)
+      const animatedHue = (particle.hue + time * 15) % 360;
 
+      // Adjust saturation and lightness based on theme
+      const saturation = isDark
+        ? particle.saturation
+        : particle.saturation * 0.8;
+      const lightness = isDark ? particle.lightness : particle.lightness * 0.9;
+
+      // Create HSL color with animated hue using cache
+      const finalAlpha = alpha * (isDark ? 0.8 : 0.6);
+      const hslColor = getHSLColor(
+        animatedHue,
+        saturation,
+        lightness,
+        finalAlpha,
+      );
+
+      ctx.fillStyle = hslColor;
+
+      // Draw particle without expensive shadow effects
       ctx.beginPath();
       ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  };
+
+  const drawReducedParticles = (ctx: CanvasRenderingContext2D) => {
+    const particles = particlesRef.current;
+    if (particles.length === 0) return;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+
+    const time = (Date.now() - startTimeRef.current) * 0.0005; // Slower animation
+
+    // Only render every other particle for performance
+    for (let i = 0; i < particles.length; i += 2) {
+      const particle = particles[i];
+      const alpha = particle.life / particle.maxLife;
+      if (alpha < 0.2) continue; // Skip more invisible particles
+
+      // Slower hue animation
+      const animatedHue = (particle.hue + time * 10) % 360;
+      const saturation = isDark
+        ? particle.saturation * 0.8
+        : particle.saturation * 0.6;
+      const lightness = isDark ? particle.lightness : particle.lightness * 0.8;
+
+      const finalAlpha = alpha * (isDark ? 0.6 : 0.4);
+      const hslColor = getHSLColor(
+        animatedHue,
+        saturation,
+        lightness,
+        finalAlpha,
+      );
+
+      ctx.fillStyle = hslColor;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  };
+
+  const drawStaticParticles = (ctx: CanvasRenderingContext2D) => {
+    const particles = particlesRef.current;
+    if (particles.length === 0) return;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+
+    // Static particles with no animation, only render every 4th particle
+    for (let i = 0; i < particles.length; i += 4) {
+      const particle = particles[i];
+      const alpha = particle.life / particle.maxLife;
+      if (alpha < 0.3) continue;
+
+      // Fixed color based on initial hue
+      const saturation = isDark ? 60 : 40;
+      const lightness = isDark ? 60 : 50;
+
+      const finalAlpha = alpha * (isDark ? 0.4 : 0.3);
+      const hslColor = getHSLColor(
+        particle.hue,
+        saturation,
+        lightness,
+        finalAlpha,
+      );
+
+      ctx.fillStyle = hslColor;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size * 0.6, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -313,74 +460,157 @@ export function BackgroundCanvas({
         particle.vx = (Math.random() - 0.5) * 0.5;
         particle.vy = (Math.random() - 0.5) * 0.5;
         particle.life = particle.maxLife;
+        particle.hue = Math.random() * 360; // New random hue when respawning
+        particle.saturation = 70 + Math.random() * 30;
+        particle.lightness = 50 + Math.random() * 20;
       }
     }
   };
 
   const animate = (currentTime: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas || !isInitialized) return;
+    try {
+      const canvas = canvasRef.current;
+      if (!canvas || !isInitialized) return;
 
-    // Check accessibility preferences
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    const reducedData = window.matchMedia(
-      "(prefers-reduced-data: reduce)",
-    ).matches;
+      // Check accessibility preferences
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      const reducedData = window.matchMedia(
+        "(prefers-reduced-data: reduce)",
+      ).matches;
 
-    // Dynamic frame rate based on performance
-    const fps = performanceMonitor.current.update();
-    const targetFrameTime = fps < 30 ? 33.33 : 16.67; // Adaptive frame rate
+      // Dynamic frame rate based on performance
+      const fps = performanceMonitor.current.update();
+      const targetFrameTime = fps < 30 ? 33.33 : 16.67; // Adaptive frame rate
 
-    if (currentTime - lastFrameTimeRef.current < targetFrameTime) {
-      animationRef.current = requestAnimationFrame(animate);
-      return;
-    }
-    lastFrameTimeRef.current = currentTime;
+      if (currentTime - lastFrameTimeRef.current < targetFrameTime) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      lastFrameTimeRef.current = currentTime;
 
-    // Adaptive quality based on performance
-    if (fps < 20 && quality !== "low") {
-      setQuality("low");
-      setTimeout(() => setIsInitialized(false), 100); // Reinitialize with lower quality
-      return;
-    }
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-
-    ctx.clearRect(0, 0, rect.width, rect.height);
-
-    // Draw pre-rendered background
-    if (backgroundTextureRef.current) {
-      ctx.drawImage(
-        backgroundTextureRef.current,
-        0,
-        0,
-        rect.width,
-        rect.height,
-      );
-    }
-
-    // Animated elements only if not reduced motion
-    if (!reducedMotion && !reducedData && quality !== "low") {
-      // Draw pre-rendered noise with slight animation
-      if (noiseTextureRef.current) {
-        const time = (Date.now() - startTimeRef.current) * 0.00005;
-        ctx.save();
-        ctx.globalAlpha = 0.6;
-        ctx.translate(Math.sin(time) * 2, Math.cos(time) * 2);
-        ctx.drawImage(noiseTextureRef.current, 0, 0, rect.width, rect.height);
-        ctx.restore();
+      // Graceful degradation based on performance
+      const now = Date.now();
+      if (now - lastDegradationChange.current > 2000) {
+        // Only check every 2 seconds
+        if (fps < 15 && degradationLevel < 4) {
+          setDegradationLevel((prev) => Math.min(prev + 1, 4));
+          lastDegradationChange.current = now;
+        } else if (fps > 45 && degradationLevel > 0) {
+          setDegradationLevel((prev) => Math.max(prev - 1, 0));
+          lastDegradationChange.current = now;
+        }
       }
 
-      // Update and draw particles (much less frequently)
-      if (Math.floor(currentTime / 100) % 3 === 0) {
-        updateParticles();
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const rect = canvas.getBoundingClientRect();
+
+      // Clear canvas with error handling
+      try {
+        ctx.clearRect(0, 0, rect.width, rect.height);
+      } catch (error) {
+        console.warn("Failed to clear canvas:", error);
       }
-      drawParticles(ctx);
+
+      // Draw pre-rendered background with error handling
+      try {
+        if (backgroundTextureRef.current) {
+          ctx.drawImage(
+            backgroundTextureRef.current,
+            0,
+            0,
+            rect.width,
+            rect.height,
+          );
+        }
+      } catch (error) {
+        console.warn("Failed to draw background texture:", error);
+        // Fallback: draw simple gradient
+        const gradient = ctx.createLinearGradient(
+          0,
+          0,
+          rect.width,
+          rect.height,
+        );
+        gradient.addColorStop(
+          0,
+          isDark ? "rgba(147, 51, 234, 0.1)" : "rgba(147, 51, 234, 0.05)",
+        );
+        gradient.addColorStop(
+          1,
+          isDark ? "rgba(59, 130, 246, 0.05)" : "rgba(59, 130, 246, 0.02)",
+        );
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, rect.width, rect.height);
+      }
+
+      // Animated elements with graceful degradation and error handling
+      if (!reducedMotion && !reducedData) {
+        try {
+          // Level 0-1: Full animation
+          if (degradationLevel <= 1) {
+            // Draw pre-rendered noise with animation
+            if (noiseTextureRef.current) {
+              const time = (Date.now() - startTimeRef.current) * 0.00005;
+              ctx.save();
+              ctx.globalAlpha = 0.6;
+              ctx.translate(Math.sin(time) * 2, Math.cos(time) * 2);
+              ctx.drawImage(
+                noiseTextureRef.current,
+                0,
+                0,
+                rect.width,
+                rect.height,
+              );
+              ctx.restore();
+            }
+
+            // Update and draw particles
+            if (Math.floor(currentTime / 100) % 3 === 0) {
+              updateParticles();
+            }
+            drawParticles(ctx);
+          }
+          // Level 2: Reduced particle count, no noise animation
+          else if (degradationLevel === 2) {
+            // Static noise
+            if (noiseTextureRef.current) {
+              ctx.save();
+              ctx.globalAlpha = 0.4;
+              ctx.drawImage(
+                noiseTextureRef.current,
+                0,
+                0,
+                rect.width,
+                rect.height,
+              );
+              ctx.restore();
+            }
+
+            // Reduce particle count and update less frequently
+            if (Math.floor(currentTime / 200) % 2 === 0) {
+              updateParticles();
+            }
+            drawReducedParticles(ctx);
+          }
+          // Level 3: Only static particles, no animation
+          else if (degradationLevel === 3) {
+            drawStaticParticles(ctx);
+          }
+          // Level 4: Only background texture, no particles or noise
+          // (just the background texture is drawn above)
+        } catch (error) {
+          console.warn("Failed to draw animated elements:", error);
+          // Continue with just the background
+        }
+      }
+    } catch (error) {
+      console.error("Critical error in animation loop:", error);
+      // Try to recover by setting degradation to maximum
+      setDegradationLevel(4);
     }
 
     animationRef.current = requestAnimationFrame(animate);
