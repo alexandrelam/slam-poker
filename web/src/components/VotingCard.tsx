@@ -41,27 +41,15 @@ export const VotingCard = memo(function VotingCard({
 }: VotingCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [isFullyHovered, setIsFullyHovered] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [transforms, setTransforms] = useState({
     rotateX: 0,
     rotateY: 0,
     rotateZ: 0,
     scale: 1,
-    translateZ: 5, // Base 3D positioning
+    translateZ: 0,
   });
   const mouseAnimationRef = useRef<number | null>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Cleanup hover timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-    };
-  }, []);
-
   // Subtle floating animation when not hovered
   useEffect(() => {
     if (isHovered || isDisabled) return;
@@ -76,7 +64,7 @@ export const VotingCard = memo(function VotingCard({
           rotateX: Math.sin(now * 0.001) * 2,
           rotateY: Math.cos(now * 0.0015) * 2,
           rotateZ: Math.sin(now * 0.0008) * 1,
-          translateZ: Math.sin(now * 0.002) * 3 + 8, // Base 5 + floating 3
+          translateZ: Math.sin(now * 0.002) * 3 + 3,
           scale: 1, // Always keep scale at 1 for floating animation
         });
         animationFrameId = requestAnimationFrame(animate);
@@ -100,28 +88,11 @@ export const VotingCard = memo(function VotingCard({
 
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
-
-    // Clear any existing timeout
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-
-    // Set a timeout for full hover animation (200ms delay)
-    hoverTimeoutRef.current = setTimeout(() => {
-      setIsFullyHovered(true);
-    }, 200);
   }, []);
 
   const handleMouseLeave = useCallback(() => {
     setIsHovered(false);
-    setIsFullyHovered(false);
     setMousePosition({ x: 0, y: 0 });
-
-    // Clear hover timeout
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
 
     // Cancel any pending mouse animation frame
     if (mouseAnimationRef.current !== null) {
@@ -135,43 +106,13 @@ export const VotingCard = memo(function VotingCard({
       rotateY: 0,
       rotateZ: 0,
       scale: 1,
-      translateZ: 5, // Return to base 3D positioning
+      translateZ: 0,
     });
   }, []);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!cardRef.current || isDisabled) return;
-
-      // Always calculate mouse position for smooth transitions
-      const rect = cardRef.current.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-
-      const mouseX = e.clientX - centerX;
-      const mouseY = e.clientY - centerY;
-
-      // Normalize to -1 to 1 range
-      const normalizedX = mouseX / (rect.width / 2);
-      const normalizedY = mouseY / (rect.height / 2);
-
-      // Light hover effect - basic rotations for smooth transitions
-      if (!isFullyHovered) {
-        // Calculate light rotations (50% of full intensity)
-        const lightRotateY = normalizedX * 15; // max 15 degrees instead of 30
-        const lightRotateX = -normalizedY * 15; // negative for natural feel
-        const lightRotateZ = (normalizedX + normalizedY) * 2.5; // subtle Z rotation
-
-        setMousePosition({ x: normalizedX, y: normalizedY });
-        setTransforms({
-          rotateX: lightRotateX,
-          rotateY: lightRotateY,
-          rotateZ: lightRotateZ,
-          scale: 1.2, // Significant scale increase for better feedback
-          translateZ: 30, // Noticeable lift from base 5
-        });
-        return;
-      }
 
       // More aggressive throttling - limit to 30fps instead of 60fps
       if (mouseAnimationRef.current !== null) return;
@@ -181,6 +122,17 @@ export const VotingCard = memo(function VotingCard({
           mouseAnimationRef.current = null;
           return;
         }
+
+        const rect = cardRef.current.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const mouseX = e.clientX - centerX;
+        const mouseY = e.clientY - centerY;
+
+        // Normalize to -1 to 1 range
+        const normalizedX = mouseX / (rect.width / 2);
+        const normalizedY = mouseY / (rect.height / 2);
 
         // Calculate dramatic 3D rotation for enhanced visibility
         const rotateY = normalizedX * 30; // max 30 degrees for dramatic effect
@@ -193,13 +145,13 @@ export const VotingCard = memo(function VotingCard({
           rotateY,
           rotateZ,
           scale: 1.25, // Moderate scale increase for better proportions
-          translateZ: 55, // Lift card off surface from base 5
+          translateZ: 50, // Lift card off surface
         });
 
         mouseAnimationRef.current = null;
       });
     },
-    [isDisabled, isFullyHovered],
+    [isDisabled],
   );
 
   // Memoize expensive gradient calculations
@@ -218,21 +170,6 @@ export const VotingCard = memo(function VotingCard({
   const holographicStyles = useMemo(() => {
     if (!isHovered || isDisabled) return {};
 
-    // Light hover effect - enhanced but still lightweight
-    if (!isFullyHovered) {
-      return {
-        background: `linear-gradient(135deg, 
-          hsla(${baseHue}deg, 60%, 85%, 0.2),
-          hsla(${baseHue + 60}deg, 60%, 85%, 0.15)
-        )`,
-        boxShadow: `
-          0 8px 24px rgba(255, 255, 255, 0.15),
-          0 0 15px hsla(${baseHue}deg, 70%, 70%, 0.2)
-        `,
-      };
-    }
-
-    // Full hover effect
     return {
       background: `linear-gradient(135deg, 
         hsla(${baseHue}deg, 80%, 75%, 0.4),
@@ -243,9 +180,13 @@ export const VotingCard = memo(function VotingCard({
         0 0 20px hsla(${baseHue}deg, 80%, 60%, 0.3)
       `,
     };
-  }, [isHovered, isFullyHovered, isDisabled, baseHue]);
+  }, [
+    isHovered,
+    isDisabled,
+    baseHue,
+  ]);
 
-  // Simplified selected state for better performance
+  // Simplified selected state for better performance  
   const selectedStyles = useMemo(() => {
     if (!isSelected || isRevealed) return {};
 
@@ -265,8 +206,7 @@ export const VotingCard = memo(function VotingCard({
   return (
     <div
       className={cn("perspective-600", {
-        "relative z-50": isFullyHovered && !isDisabled, // Bring fully hovered card to front
-        "relative z-45": isHovered && !isFullyHovered && !isDisabled, // Light hover slightly elevated
+        "relative z-50": isHovered && !isDisabled, // Bring hovered card to front
         "relative z-40": isSelected && !isRevealed, // Selected cards above others
       })}
       style={{ perspective: "600px" }}
@@ -277,11 +217,9 @@ export const VotingCard = memo(function VotingCard({
           "relative flex items-center justify-center w-24 h-32 cursor-pointer select-none",
           "transform-gpu preserve-3d border-2 border-border overflow-hidden",
           {
-            // Transition timing - fast for light hover, moderate for full hover, slow for exit
-            "transition-all duration-100 ease-out":
-              isHovered && !isFullyHovered,
-            "transition-all duration-200 ease-out": isFullyHovered,
-            "transition-all duration-400 ease-out": !isHovered,
+            // Transition timing
+            "transition-all duration-100 ease-out": isHovered,
+            "transition-all duration-500 ease-out": !isHovered,
 
             // Rainbow selected state with breezing effect
             "card-selected-rainbow shadow-xl": isSelected && !isRevealed,
@@ -293,8 +231,8 @@ export const VotingCard = memo(function VotingCard({
             "bg-muted border-muted-foreground": isRevealed && !isSelected,
             "card-selected-rainbow": isRevealed && isSelected,
 
-            // Holographic hover effect - only on full hover
-            "holographic-card": isFullyHovered && !isDisabled,
+            // Holographic hover effect
+            "holographic-card": isHovered && !isDisabled,
           },
           className,
         )}
@@ -385,8 +323,8 @@ export const VotingCard = memo(function VotingCard({
           />
         )}
 
-        {/* Optimized single holographic overlay - only show on full hover */}
-        {isFullyHovered && !isDisabled && (
+        {/* Optimized single holographic overlay */}
+        {isHovered && !isDisabled && (
           <div
             className="absolute inset-0 rounded-md opacity-50 mix-blend-overlay pointer-events-none"
             style={{
