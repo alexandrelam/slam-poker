@@ -114,7 +114,7 @@ export const VotingCard = memo(function VotingCard({
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!cardRef.current || isDisabled) return;
 
-      // Throttle mouse move events using requestAnimationFrame
+      // More aggressive throttling - limit to 30fps instead of 60fps
       if (mouseAnimationRef.current !== null) return;
 
       mouseAnimationRef.current = requestAnimationFrame(() => {
@@ -166,80 +166,39 @@ export const VotingCard = memo(function VotingCard({
 
   const { gradientX, gradientY, baseHue, mouseHueShift } = gradientCalculations;
 
-  // Memoize complex holographic background calculations
+  // Simplified holographic background for better performance
   const holographicStyles = useMemo(() => {
     if (!isHovered || isDisabled) return {};
 
     return {
-      background: `
-        radial-gradient(circle at ${gradientX}% ${gradientY}%, 
-          hsla(${baseHue + mouseHueShift}deg, 100%, 85%, 0.5) 0%,
-          hsla(${baseHue + mouseHueShift + 60}deg, 100%, 80%, 0.4) 25%,
-          hsla(${baseHue + mouseHueShift + 120}deg, 95%, 70%, 0.3) 50%,
-          hsla(${baseHue + mouseHueShift + 180}deg, 90%, 75%, 0.2) 75%,
-          transparent 90%
-        ),
-        linear-gradient(135deg, 
-          hsla(${baseHue + 45}deg, 100%, 85%, 0.6),
-          hsla(${baseHue + 225}deg, 95%, 75%, 0.4)
-        )
-      `,
-      backdropFilter: "blur(0.8px) saturate(1.5)",
+      background: `linear-gradient(135deg, 
+        hsla(${baseHue}deg, 80%, 75%, 0.4),
+        hsla(${baseHue + 120}deg, 80%, 75%, 0.3)
+      )`,
       boxShadow: `
-        ${transforms.rotateY * 1.5}px ${transforms.rotateX * 1.5}px 40px rgba(255, 255, 255, 0.15),
-        ${transforms.rotateY * 0.8}px ${transforms.rotateX * 0.8}px 20px rgba(255, 255, 255, 0.1),
-        0 0 60px rgba(${Math.abs(transforms.rotateY) * 6 + 100}, ${Math.abs(transforms.rotateX) * 6 + 150}, 255, 0.4),
-        0 0 30px rgba(255, 255, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.1)
+        0 8px 32px rgba(255, 255, 255, 0.1),
+        0 0 20px hsla(${baseHue}deg, 80%, 60%, 0.3)
       `,
     };
   }, [
     isHovered,
     isDisabled,
-    gradientX,
-    gradientY,
     baseHue,
-    mouseHueShift,
-    transforms.rotateX,
-    transforms.rotateY,
   ]);
 
-  // Memoize selected state background calculations
+  // Simplified selected state for better performance  
   const selectedStyles = useMemo(() => {
     if (!isSelected || isRevealed) return {};
 
     return {
-      backdropFilter: "blur(0.5px) saturate(1.3)",
-      background: `
-        radial-gradient(circle at 30% 30%, 
-          hsla(${baseHue}deg, 100%, 85%, 0.6) 0%,
-          hsla(${baseHue + 60}deg, 100%, 80%, 0.5) 25%,
-          hsla(${baseHue + 120}deg, 95%, 75%, 0.4) 50%,
-          hsla(${baseHue + 180}deg, 90%, 80%, 0.3) 75%,
-          hsla(${baseHue + 240}deg, 95%, 85%, 0.2) 100%
-        ),
-        radial-gradient(circle at 70% 70%, 
-          hsla(${baseHue + 180}deg, 100%, 85%, 0.5) 0%,
-          hsla(${baseHue + 240}deg, 100%, 80%, 0.4) 30%,
-          hsla(${baseHue + 300}deg, 95%, 75%, 0.3) 60%,
-          transparent 100%
-        ),
-        linear-gradient(135deg, 
-          hsla(${baseHue + 30}deg, 100%, 85%, 0.4),
-          hsla(${baseHue + 120}deg, 95%, 80%, 0.3),
-          hsla(${baseHue + 210}deg, 95%, 75%, 0.3),
-          hsla(${baseHue + 300}deg, 100%, 80%, 0.2)
-        )
-      `,
-      border: `4px solid hsl(${baseHue}deg, 100%, 60%)`,
+      background: `linear-gradient(135deg, 
+        hsla(${baseHue}deg, 90%, 75%, 0.5),
+        hsla(${baseHue + 120}deg, 90%, 75%, 0.4)
+      )`,
+      border: `3px solid hsl(${baseHue}deg, 80%, 60%)`,
       boxShadow: `
-        0 0 40px hsla(${baseHue}deg, 100%, 70%, 0.3),
-        0 0 80px hsla(${baseHue + 120}deg, 100%, 70%, 0.2),
-        0 8px 32px rgba(255, 255, 255, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.1),
-        0 0 20px hsla(${baseHue}deg, 100%, 60%, 0.6)
+        0 0 20px hsla(${baseHue}deg, 80%, 60%, 0.4),
+        0 4px 16px rgba(255, 255, 255, 0.1)
       `,
     };
   }, [isSelected, isRevealed, baseHue]);
