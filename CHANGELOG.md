@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-08-02
+
+### Changed
+
+- Light theme is now the default theme when opening the app
+
+### Improved
+
+- Optimized voting card animations for better performance
+- Simplified gradient calculations and reduced box-shadow complexity
+- Enhanced mouse move throttling for smoother card interactions
+
+## [1.0.0] - 2025-07-27
+
+### Added
+
+- **🎯 Emoji Reactions**: Throw emojis at your colleagues during planning sessions to add some fun and express reactions in real-time
+- **⏱️ Round Timer**: Measure and track the time it takes for each planning round to improve meeting efficiency
+
+### Fixed
+
+- **🎴 Card Animation**: Fixed animation glitches when cards are revealed during voting sessions
+
+### Improved
+
+- Various small user interface enhancements for better user experience
+- Improved visual feedback and interactions
+
 ## [0.5.0] - 2025-07-27
 
 ### Changed
