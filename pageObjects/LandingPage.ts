@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, Locator, expect } from "@playwright/test";
 
 export interface FeaturesContent {
   realtime: string | null;
@@ -52,44 +52,47 @@ export class LandingPage {
 
     // Header elements
     this.logo = page.locator('img[alt="SLAM Poker"]');
-    this.connectionStatus = page.getByText('Connecting...');
+    this.connectionStatus = page.getByText("Connecting...");
 
     // Main action buttons
-    this.joinRoomButton = page.getByRole('button', { name: 'Join Room' });
-    this.createRoomButton = page.getByRole('button', { name: 'Create Room' });
+    this.joinRoomButton = page.getByRole("button", { name: "Join Room" });
+    this.createRoomButton = page.getByRole("button", { name: "Create Room" });
 
     // Form elements
-    this.roomCodeInput = page.getByRole('textbox', { name: /room code/i });
-    this.playerNameInput = page.getByRole('textbox', { name: /your name|name/i });
-    this.joinButton = page.getByRole('button', { name: /joining/i });
+    this.roomCodeInput = page.getByRole("textbox", { name: /room code/i });
+    this.playerNameInput = page.getByRole("textbox", {
+      name: /your name|name/i,
+    });
+    this.joinButton = page.getByRole("button", { name: /joining/i });
 
     // Form labels and descriptions
-    this.roomCodeLabel = page.getByText('Room Code');
-    this.playerNameLabel = page.getByText('Your Name');
-    this.formDescription = page.getByText('Enter the room code shared by your team');
+    this.roomCodeLabel = page.getByText("Room Code");
+    this.playerNameLabel = page.getByText("Your Name");
+    this.formDescription = page.getByText(
+      "Enter the room code shared by your team",
+    );
 
     // Features section
-    this.featuresSection = page.locator('[data-testid="features"]').or(
-      page.locator('.features')
-    ).or(
-      page.locator('section').filter({ hasText: 'Features' })
-    );
-    this.featuresTitle = page.getByText('Features');
-    this.realtimeFeature = page.getByText('Real-time collaborative voting');
-    this.fibonacciFeature = page.getByText('Fibonacci sequence estimation');
-    this.participantsFeature = page.getByText('Up to 10 participants per room');
-    this.noRegistrationFeature = page.getByText('No registration required');
+    this.featuresSection = page
+      .locator('[data-testid="features"]')
+      .or(page.locator(".features"))
+      .or(page.locator("section").filter({ hasText: "Features" }));
+    this.featuresTitle = page.getByText("Features");
+    this.realtimeFeature = page.getByText("Real-time collaborative voting");
+    this.fibonacciFeature = page.getByText("Fibonacci sequence estimation");
+    this.participantsFeature = page.getByText("Up to 10 participants per room");
+    this.noRegistrationFeature = page.getByText("No registration required");
 
     // Footer elements
-    this.footer = page.locator('contentinfo, footer');
-    this.githubLink = page.getByRole('link', { name: 'Open source on GitHub' });
-    this.authorLink = page.getByRole('link', { name: 'Alexandre Lam' });
-    this.madeWithLoveText = page.getByText('Made with love by');
+    this.footer = page.locator("contentinfo, footer");
+    this.githubLink = page.getByRole("link", { name: "Open source on GitHub" });
+    this.authorLink = page.getByRole("link", { name: "Alexandre Lam" });
+    this.madeWithLoveText = page.getByText("Made with love by");
   }
 
   // Navigation methods
   async navigateTo(): Promise<void> {
-    await this.page.goto('/');
+    await this.page.goto("/");
     await this.waitForPageLoad();
   }
 
@@ -150,29 +153,31 @@ export class LandingPage {
   }
 
   async areFormInputsDisabled(): Promise<boolean> {
-    const [roomCodeDisabled, playerNameDisabled, joinButtonDisabled] = await Promise.all([
-      this.roomCodeInput.isDisabled(),
-      this.playerNameInput.isDisabled(),
-      this.joinButton.isDisabled()
-    ]);
+    const [roomCodeDisabled, playerNameDisabled, joinButtonDisabled] =
+      await Promise.all([
+        this.roomCodeInput.isDisabled(),
+        this.playerNameInput.isDisabled(),
+        this.joinButton.isDisabled(),
+      ]);
 
     return roomCodeDisabled && playerNameDisabled && joinButtonDisabled;
   }
 
   // Content verification methods
   async getFeaturesContent(): Promise<FeaturesContent> {
-    const [realtime, fibonacci, participants, noRegistration] = await Promise.all([
-      this.realtimeFeature.textContent(),
-      this.fibonacciFeature.textContent(),
-      this.participantsFeature.textContent(),
-      this.noRegistrationFeature.textContent()
-    ]);
+    const [realtime, fibonacci, participants, noRegistration] =
+      await Promise.all([
+        this.realtimeFeature.textContent(),
+        this.fibonacciFeature.textContent(),
+        this.participantsFeature.textContent(),
+        this.noRegistrationFeature.textContent(),
+      ]);
 
     return {
       realtime,
       fibonacci,
       participants,
-      noRegistration
+      noRegistration,
     };
   }
 
@@ -185,32 +190,35 @@ export class LandingPage {
   }
 
   async getGithubLinkUrl(): Promise<string | null> {
-    return await this.githubLink.getAttribute('href');
+    return await this.githubLink.getAttribute("href");
   }
 
   async getAuthorLinkUrl(): Promise<string | null> {
-    return await this.authorLink.getAttribute('href');
+    return await this.authorLink.getAttribute("href");
   }
 
   // Wait methods
   async waitForPageLoad(): Promise<void> {
-    await this.page.waitForLoadState('networkidle');
-    await this.logo.waitFor({ state: 'visible' });
+    await this.page.waitForLoadState("networkidle");
+    await this.logo.waitFor({ state: "visible" });
   }
 
-  async waitForConnectionStatus(expectedStatus: string = 'Connected', timeout: number = 10000): Promise<void> {
+  async waitForConnectionStatus(
+    expectedStatus: string = "Connected",
+    timeout: number = 10000,
+  ): Promise<void> {
     await this.page.waitForFunction(
       (status) => document.body.textContent?.includes(status) ?? false,
       expectedStatus,
-      { timeout }
+      { timeout },
     );
   }
 
   async waitForFormToBeEnabled(): Promise<void> {
     await Promise.all([
-      this.roomCodeInput.waitFor({ state: 'visible' }),
-      this.playerNameInput.waitFor({ state: 'visible' }),
-      this.joinButton.waitFor({ state: 'visible' })
+      this.roomCodeInput.waitFor({ state: "visible" }),
+      this.playerNameInput.waitFor({ state: "visible" }),
+      this.joinButton.waitFor({ state: "visible" }),
     ]);
 
     await expect(this.roomCodeInput).toBeEnabled();
@@ -227,10 +235,10 @@ export class LandingPage {
     return this.page.url();
   }
 
-  async takeScreenshot(name: string = 'landing-page'): Promise<Buffer> {
+  async takeScreenshot(name: string = "landing-page"): Promise<Buffer> {
     return await this.page.screenshot({
       path: `screenshots/${name}.png`,
-      fullPage: true
+      fullPage: true,
     });
   }
 
@@ -262,7 +270,7 @@ export class LandingPage {
   }
 
   async expectFooterLinksToBeValid(): Promise<void> {
-    await expect(this.githubLink).toHaveAttribute('href', /github\.com/);
-    await expect(this.authorLink).toHaveAttribute('href', /github\.com/);
+    await expect(this.githubLink).toHaveAttribute("href", /github\.com/);
+    await expect(this.authorLink).toHaveAttribute("href", /github\.com/);
   }
 }

@@ -180,13 +180,9 @@ export const VotingCard = memo(function VotingCard({
         0 0 20px hsla(${baseHue}deg, 80%, 60%, 0.3)
       `,
     };
-  }, [
-    isHovered,
-    isDisabled,
-    baseHue,
-  ]);
+  }, [isHovered, isDisabled, baseHue]);
 
-  // Simplified selected state for better performance  
+  // Simplified selected state for better performance
   const selectedStyles = useMemo(() => {
     if (!isSelected || isRevealed) return {};
 
