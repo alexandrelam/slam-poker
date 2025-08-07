@@ -1,0 +1,197 @@
+{
+  "id": null,
+  "title": "SLAM Poker - System Health",
+  "tags": ["slam-poker", "system", "health", "infrastructure"],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "hideControls": false,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Memory Usage",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "slam_poker_process_resident_memory_bytes / 1024 / 1024",
+          "legendFormat": "Resident Memory (MB)",
+          "refId": "A"
+        },
+        {
+          "expr": "slam_poker_nodejs_heap_size_used_bytes / 1024 / 1024",
+          "legendFormat": "Heap Used (MB)",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "decbytes",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 512000000},
+              {"color": "red", "value": 1073741824}
+            ]
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "title": "CPU Usage",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_process_cpu_user_seconds_total[5m]) * 100",
+          "legendFormat": "User CPU %",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(slam_poker_process_cpu_system_seconds_total[5m]) * 100",
+          "legendFormat": "System CPU %",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "percent",
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 60},
+              {"color": "red", "value": 80}
+            ]
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    },
+    {
+      "id": 3,
+      "title": "Event Loop Lag",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "slam_poker_nodejs_eventloop_lag_seconds",
+          "legendFormat": "Event Loop Lag",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 0.01},
+              {"color": "red", "value": 0.1}
+            ]
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "id": 4,
+      "title": "Error Rates",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_errors_total[5m]) * 300",
+          "legendFormat": "{{error_category}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1},
+              {"color": "red", "value": 5}
+            ]
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+    },
+    {
+      "id": 5,
+      "title": "HTTP Status Codes",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_http_requests_total{status_code=~\"2..\"}[5m]) * 300",
+          "legendFormat": "2xx Success",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(slam_poker_http_requests_total{status_code=~\"4..\"}[5m]) * 300",
+          "legendFormat": "4xx Client Error",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(slam_poker_http_requests_total{status_code=~\"5..\"}[5m]) * 300",
+          "legendFormat": "5xx Server Error",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "reqps"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+    },
+    {
+      "id": 6,
+      "title": "Garbage Collection",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_nodejs_gc_duration_seconds_total[5m])",
+          "legendFormat": "GC Duration/sec",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 27,
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "version": 1
+}

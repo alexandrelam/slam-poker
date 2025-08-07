@@ -1,0 +1,206 @@
+{
+  "id": null,
+  "title": "SLAM Poker - Alerts & SLA",
+  "tags": ["slam-poker", "alerts", "sla", "monitoring"],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "hideControls": false,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP Request Success Rate (SLA: 99.9%)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "(sum(rate(slam_poker_http_requests_total{status_code!~\"5..\"}[5m])) / sum(rate(slam_poker_http_requests_total[5m]))) * 100",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 99},
+              {"color": "green", "value": 99.9}
+            ]
+          },
+          "unit": "percent",
+          "max": 100,
+          "min": 95
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "title": "Average Response Time (SLA: <100ms)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(slam_poker_http_request_duration_seconds_bucket[5m])) * 1000",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 100},
+              {"color": "red", "value": 500}
+            ]
+          },
+          "unit": "ms"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+    },
+    {
+      "id": 3,
+      "title": "Error Rate (SLA: <0.1%)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "(sum(rate(slam_poker_errors_total[5m])) / sum(rate(slam_poker_http_requests_total[5m]))) * 100",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 0.1},
+              {"color": "red", "value": 1}
+            ]
+          },
+          "unit": "percent",
+          "max": 5,
+          "min": 0
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+    },
+    {
+      "id": 4,
+      "title": "System Health Score",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "slam_poker_system_health_score",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 70},
+              {"color": "green", "value": 90}
+            ]
+          },
+          "unit": "percent",
+          "max": 100,
+          "min": 0
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+    },
+    {
+      "id": 5,
+      "title": "Critical Alerts Status",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "up{job=\"slam-poker\"} == 0",
+          "legendFormat": "Service Down",
+          "refId": "A"
+        },
+        {
+          "expr": "slam_poker_system_health_score < 50",
+          "legendFormat": "Low Health Score",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(slam_poker_errors_total[5m]) > 0.1",
+          "legendFormat": "High Error Rate",
+          "refId": "C"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(slam_poker_http_request_duration_seconds_bucket[5m])) > 1",
+          "legendFormat": "High Latency",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 4}
+    },
+    {
+      "id": 6,
+      "title": "SLA Compliance Over Time",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "(sum(rate(slam_poker_http_requests_total{status_code!~\"5..\"}[5m])) / sum(rate(slam_poker_http_requests_total[5m]))) * 100",
+          "legendFormat": "Success Rate %",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(slam_poker_http_request_duration_seconds_bucket[5m])) * 1000 < 500",
+          "legendFormat": "Latency SLA (< 500ms)",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "percent",
+          "max": 100,
+          "min": 98,
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 99},
+              {"color": "green", "value": 99.9}
+            ]
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12}
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 27,
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "version": 1
+}

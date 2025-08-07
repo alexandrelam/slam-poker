@@ -1,0 +1,315 @@
+{
+  "id": null,
+  "title": "SLAM Poker - Overview",
+  "tags": ["slam-poker", "overview"],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "query": "label_values(slam_poker_active_rooms, instance)",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": "time"
+      },
+      {
+        "name": "room_code",
+        "type": "query", 
+        "query": "label_values(slam_poker_peak_users_in_room, room_code)",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": "time"
+      }
+    ]
+  },
+  "graphTooltip": 0,
+  "hideControls": false,
+  "links": [
+    {
+      "title": "Room Analytics",
+      "tooltip": "View detailed room and voting analytics",
+      "type": "dashboard",
+      "tags": ["slam-poker", "rooms"],
+      "targetBlank": false
+    },
+    {
+      "title": "Performance",
+      "tooltip": "HTTP and WebSocket latency analysis",
+      "type": "dashboard", 
+      "tags": ["slam-poker", "performance"],
+      "targetBlank": false
+    },
+    {
+      "title": "System Health",
+      "tooltip": "Infrastructure and Node.js metrics",
+      "type": "dashboard",
+      "tags": ["slam-poker", "system"],
+      "targetBlank": false
+    },
+    {
+      "title": "Alerts & SLA",
+      "tooltip": "SLA compliance and alert status",
+      "type": "dashboard",
+      "tags": ["slam-poker", "alerts"],
+      "targetBlank": false
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Active Rooms",
+      "description": "Current number of rooms with active users. A room is considered active if it has at least one connected user.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "slam_poker_active_rooms",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 100},
+              {"color": "red", "value": 250}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Active Users",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "slam_poker_active_users",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 500},
+              {"color": "red", "value": 1000}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+    },
+    {
+      "id": 3,
+      "title": "Active Sessions",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "slam_poker_active_sessions",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 200},
+              {"color": "red", "value": 500}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+    },
+    {
+      "id": 4,
+      "title": "System Health Score",
+      "description": "Composite health score (0-100) based on system metrics, error rates, and resource utilization. Green >80, Yellow 50-80, Red <50.",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "slam_poker_system_health_score",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 50},
+              {"color": "green", "value": 80}
+            ]
+          },
+          "unit": "percent",
+          "max": 100,
+          "min": 0
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+    },
+    {
+      "id": 5,
+      "title": "Rooms Created Over Time",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_rooms_created_total[5m])",
+          "legendFormat": "Rooms/sec",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "visible",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "User Joins Over Time",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_user_joins_total[5m])",
+          "legendFormat": "User Joins/sec",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+    },
+    {
+      "id": 7,
+      "title": "WebSocket Connections",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_websocket_connections_total{event_type=\"connect\"}[5m])",
+          "legendFormat": "Connects/sec",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(slam_poker_websocket_connections_total{event_type=\"disconnect\"}[5m])",
+          "legendFormat": "Disconnects/sec",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}
+    },
+    {
+      "id": 8,
+      "title": "HTTP Requests by Status",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_http_requests_total[5m])",
+          "legendFormat": "{{status_code}} {{method}} {{path}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "reqps"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
+    },
+    {
+      "id": 9,
+      "title": "Error Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_errors_total[5m])",
+          "legendFormat": "{{error_category}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 20}
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 27,
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "version": 1
+}

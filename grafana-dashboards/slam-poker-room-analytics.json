@@ -1,0 +1,209 @@
+{
+  "id": null,
+  "title": "SLAM Poker - Room Analytics",
+  "tags": ["slam-poker", "rooms", "analytics"],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "hideControls": false,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Peak Users by Room",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "slam_poker_peak_users_in_room",
+          "legendFormat": "Room {{room_code}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "visible",
+          "placement": "right"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Votes Cast by Room",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_votes_cast_total[5m]) * 300",
+          "legendFormat": "Room {{room_code}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    },
+    {
+      "id": 3,
+      "title": "Room Lifecycle Events",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"created\"}[5m]) * 300",
+          "legendFormat": "Rooms Created",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"joined\"}[5m]) * 300",
+          "legendFormat": "User Joins",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"left\"}[5m]) * 300",
+          "legendFormat": "User Leaves",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"voting_started\"}[5m]) * 300",
+          "legendFormat": "Voting Started",
+          "refId": "D"
+        },
+        {
+          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"votes_revealed\"}[5m]) * 300",
+          "legendFormat": "Votes Revealed",
+          "refId": "E"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+    },
+    {
+      "id": 4,
+      "title": "Voting Round Duration Distribution",
+      "type": "heatmap",
+      "targets": [
+        {
+          "expr": "rate(slam_poker_voting_round_duration_seconds_bucket[5m])",
+          "legendFormat": "{{le}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "spectrum"
+          },
+          "unit": "s"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+    },
+    {
+      "id": 5,
+      "title": "Voting Round Duration Percentiles",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(slam_poker_voting_round_duration_seconds_bucket[5m]))",
+          "legendFormat": "50th percentile",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.90, rate(slam_poker_voting_round_duration_seconds_bucket[5m]))",
+          "legendFormat": "90th percentile",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(slam_poker_voting_round_duration_seconds_bucket[5m]))",
+          "legendFormat": "95th percentile",
+          "refId": "C"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(slam_poker_voting_round_duration_seconds_bucket[5m]))",
+          "legendFormat": "99th percentile",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+    },
+    {
+      "id": 6,
+      "title": "Total Votes Cast by Room",
+      "type": "table",
+      "targets": [
+        {
+          "expr": "slam_poker_votes_cast_total",
+          "legendFormat": "",
+          "refId": "A",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 50},
+              {"color": "red", "value": 100}
+            ]
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24},
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {"__name__": true, "instance": true, "job": true},
+            "renameByName": {
+              "room_code": "Room Code",
+              "Value": "Total Votes"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 27,
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "version": 1
+}
