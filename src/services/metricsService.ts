@@ -12,19 +12,19 @@ class MetricsService {
 
   // Gauges - Current state metrics
   private readonly activeRoomsGauge = new Gauge({
-    name: "slam_poker_active_rooms_total",
+    name: "slam_poker_active_rooms",
     help: "Number of currently active rooms",
     registers: [this.registry],
   });
 
   private readonly activeUsersGauge = new Gauge({
-    name: "slam_poker_active_users_total",
+    name: "slam_poker_active_users",
     help: "Number of currently active users across all rooms",
     registers: [this.registry],
   });
 
   private readonly activeSessionsGauge = new Gauge({
-    name: "slam_poker_active_sessions_total",
+    name: "slam_poker_active_sessions",
     help: "Number of currently active user sessions",
     registers: [this.registry],
   });

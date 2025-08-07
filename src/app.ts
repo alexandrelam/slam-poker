@@ -126,6 +126,24 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.get("/metrics", async (req, res) => {
+  try {
+    const metrics = await metricsService.getMetrics();
+    res.set("Content-Type", "text/plain; charset=utf-8");
+    res.send(metrics);
+  } catch (error) {
+    logger.logError(
+      "Failed to generate metrics",
+      error as Error,
+      "system_error",
+      {
+        correlation_id: (req as any).correlationId,
+      },
+    );
+    res.status(500).send("Error generating metrics");
+  }
+});
+
 app.use(express.static(path.join(__dirname, "../web/dist")));
 
 // Fixed: Use proper catch-all middleware instead of wildcard route

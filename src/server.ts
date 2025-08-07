@@ -7,7 +7,6 @@ import roomService from "@/services/roomService";
 import sessionTrackingService from "@/services/sessionTrackingService";
 import errorTrackingService from "@/services/errorTrackingService";
 import metricsService from "@/services/metricsService";
-import metricsServer from "@/services/metricsServer";
 import {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -110,15 +109,12 @@ setInterval(() => {
   }
 }, CLEANUP_INTERVAL);
 
-// Metrics server initialization moved to index.ts for better startup control
-
 // Log server startup
 logger.logSystemEvent("SLAM Poker server initialized", "websocket_connect", {
   port: config.port,
   environment: config.nodeEnv,
   loki_enabled: config.loki.enabled,
   metrics_enabled: config.metrics.enabled,
-  metrics_port: config.metrics.port,
   cors_origins: Array.isArray(config.corsOrigin)
     ? config.corsOrigin.join(",")
     : config.corsOrigin,
