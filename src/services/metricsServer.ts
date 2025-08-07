@@ -8,7 +8,7 @@ import { Pushgateway } from "prom-client";
 class MetricsServer {
   private app: express.Application;
   private server?: Server;
-  private pushGateway?: Pushgateway;
+  private pushGateway?: Pushgateway<any>;
   private pushInterval?: NodeJS.Timeout;
 
   constructor() {
