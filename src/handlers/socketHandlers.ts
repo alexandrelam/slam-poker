@@ -1,6 +1,7 @@
 import { SocketType } from "@/types/socket.types";
 import logger from "@/utils/logger";
 import correlationService from "@/utils/correlationService";
+import metricsService from "@/services/metricsService";
 
 // Import modular handlers
 import { handleJoinRoom, handleUpdateRoomSettings } from "./roomHandlers";
@@ -16,6 +17,23 @@ import {
 } from "./userHandlers";
 import { handleEmojiSpawn } from "./emojiHandlers";
 import { handleStartTimer, handleResetTimer } from "./timerHandlers";
+
+// Helper function to wrap event handlers with metrics tracking
+const withMetrics = (eventType: string, handler: Function) => {
+  return (...args: any[]) => {
+    const startTime = Date.now();
+    try {
+      const result = handler(...args);
+      const duration = (Date.now() - startTime) / 1000;
+      metricsService.observeWebsocketEventDuration(eventType, duration);
+      return result;
+    } catch (error) {
+      const duration = (Date.now() - startTime) / 1000;
+      metricsService.observeWebsocketEventDuration(eventType, duration);
+      throw error;
+    }
+  };
+};
 
 export const handleSocketConnection = (socket: SocketType, io: any) => {
   // Initialize correlation ID for this socket connection
@@ -35,26 +53,26 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
   );
 
   // Room-related events
-  socket.on("join-room", (data) => handleJoinRoom(socket, io, data));
-  socket.on("update-room-settings", (data) =>
-    handleUpdateRoomSettings(socket, io, data),
-  );
+  socket.on("join-room", withMetrics("join-room", (data: any) => handleJoinRoom(socket, io, data)));
+  socket.on("update-room-settings", withMetrics("update-room-settings", (data: any) =>
+    handleUpdateRoomSettings(socket, io, data)
+  ));
 
   // Voting-related events
-  socket.on("vote", (data) => handleVote(socket, io, data));
-  socket.on("reveal-votes", () => handleRevealVotes(socket, io));
-  socket.on("next-round", () => handleNextRound(socket, io));
+  socket.on("vote", withMetrics("vote", (data: any) => handleVote(socket, io, data)));
+  socket.on("reveal-votes", withMetrics("reveal-votes", () => handleRevealVotes(socket, io)));
+  socket.on("next-round", withMetrics("next-round", () => handleNextRound(socket, io)));
 
   // Timer-related events
-  socket.on("start-timer", () => handleStartTimer(socket, io));
-  socket.on("reset-timer", () => handleResetTimer(socket, io));
+  socket.on("start-timer", withMetrics("start-timer", () => handleStartTimer(socket, io)));
+  socket.on("reset-timer", withMetrics("reset-timer", () => handleResetTimer(socket, io)));
 
   // User management events
-  socket.on("kick-user", (data) => handleKickUser(socket, io, data));
-  socket.on("change-name", (data) => handleChangeName(socket, io, data));
+  socket.on("kick-user", withMetrics("kick-user", (data: any) => handleKickUser(socket, io, data)));
+  socket.on("change-name", withMetrics("change-name", (data: any) => handleChangeName(socket, io, data)));
 
   // Emoji events
-  socket.on("emoji-spawn", (data) => handleEmojiSpawn(socket, io, data));
+  socket.on("emoji-spawn", withMetrics("emoji-spawn", (data: any) => handleEmojiSpawn(socket, io, data)));
 
   // Enhanced disconnect handler
   socket.on("disconnect", (reason) => {

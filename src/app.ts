@@ -3,6 +3,7 @@ import path from "path";
 import corsMiddleware from "@/middleware/cors";
 import securityMiddleware from "@/middleware/security";
 import logger from "@/utils/logger";
+import metricsService from "@/services/metricsService";
 
 const app = express();
 
@@ -42,6 +43,11 @@ app.use((req, res, next) => {
   // Use res.on('finish') instead of overriding res.end to avoid TypeScript issues
   res.on("finish", () => {
     const duration = Date.now() - startTime;
+    const durationSeconds = duration / 1000;
+
+    // Track HTTP metrics in Prometheus
+    metricsService.incrementHttpRequests(req.method, req.path, res.statusCode);
+    metricsService.observeHttpRequestDuration(req.method, req.path, durationSeconds);
 
     // Log request completion with performance metrics
     logger.logPerformance(

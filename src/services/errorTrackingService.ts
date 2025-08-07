@@ -1,4 +1,5 @@
 import logger, { ErrorCategory, OperationType } from "@/utils/logger";
+import metricsService from "@/services/metricsService";
 
 interface ErrorMetrics {
   category: ErrorCategory;
@@ -42,6 +43,9 @@ class ErrorTrackingService {
         lastOccurrence: now,
       });
     }
+
+    // Track error in Prometheus metrics
+    metricsService.incrementErrors(category);
 
     // Update hourly counts
     const hourlyKey = `${Math.floor(now.getTime() / (60 * 60 * 1000))}`;

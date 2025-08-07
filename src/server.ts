@@ -6,6 +6,8 @@ import logger from "@/utils/logger";
 import roomService from "@/services/roomService";
 import sessionTrackingService from "@/services/sessionTrackingService";
 import errorTrackingService from "@/services/errorTrackingService";
+import metricsService from "@/services/metricsService";
+import metricsServer from "@/services/metricsServer";
 import {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -31,6 +33,12 @@ const io = new Server<
 
 io.on("connection", (socket) => {
   logger.info("User connected", { socketId: socket.id });
+  metricsService.incrementWebsocketConnections('connect');
+  
+  socket.on('disconnect', () => {
+    metricsService.incrementWebsocketConnections('disconnect');
+  });
+  
   handleSocketConnection(socket, io);
 });
 
@@ -44,6 +52,9 @@ setInterval(() => {
 
     // Log overall system health
     const healthScore = errorTrackingService.getSystemHealthScore();
+    const activeRooms = roomService.getRoomCount();
+    const sessionStats = sessionTrackingService.getSessionStatistics();
+    
     logger.logBusinessMetric("System health check", {
       health_score: healthScore,
       status:
@@ -52,9 +63,16 @@ setInterval(() => {
           : healthScore > 60
             ? "degraded"
             : "unhealthy",
-      active_rooms: roomService.getRoomCount(),
-      active_sessions:
-        sessionTrackingService.getSessionStatistics().totalActiveSessions,
+      active_rooms: activeRooms,
+      active_sessions: sessionStats.totalActiveSessions,
+    });
+
+    // Update Prometheus metrics with current state
+    metricsService.updateCurrentStateMetrics({
+      activeRooms,
+      activeUsers: roomService.getTotalActiveUsers(),
+      activeSessions: sessionStats.totalActiveSessions,
+      systemHealth: healthScore,
     });
   } catch (error) {
     logger.logError(
@@ -92,11 +110,15 @@ setInterval(() => {
   }
 }, CLEANUP_INTERVAL);
 
+// Metrics server initialization moved to index.ts for better startup control
+
 // Log server startup
 logger.logSystemEvent("SLAM Poker server initialized", "websocket_connect", {
   port: config.port,
   environment: config.nodeEnv,
   loki_enabled: config.loki.enabled,
+  metrics_enabled: config.metrics.enabled,
+  metrics_port: config.metrics.port,
   cors_origins: Array.isArray(config.corsOrigin)
     ? config.corsOrigin.join(",")
     : config.corsOrigin,
