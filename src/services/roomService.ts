@@ -11,6 +11,7 @@ import {
 import { generateRoomCode } from "@/utils/roomCodeGenerator";
 import userService from "@/services/userService";
 import logger from "@/utils/logger";
+import metricsService from "@/services/metricsService";
 
 class RoomService {
   private rooms: Map<string, Room> = new Map();
@@ -53,6 +54,10 @@ class RoomService {
       totalVotes: 0,
       lastActivity: new Date(),
     });
+
+    // Track room creation in Prometheus metrics
+    metricsService.incrementRoomsCreated();
+    metricsService.incrementRoomLifecycleEvent('created');
 
     // Enhanced room creation logging
     logger.logSystemEvent(
@@ -131,6 +136,10 @@ class RoomService {
       lastActivity: new Date(),
     });
 
+    // Track room creation in Prometheus metrics
+    metricsService.incrementRoomsCreated();
+    metricsService.incrementRoomLifecycleEvent('created');
+
     // Enhanced room creation logging
     logger.logSystemEvent(
       "Room created with user-specified code",
@@ -175,10 +184,16 @@ class RoomService {
     if (metrics) {
       if (isNewUser) {
         metrics.totalJoins++;
+        // Track user join in Prometheus metrics
+        metricsService.incrementUserJoins();
+        metricsService.incrementRoomLifecycleEvent('joined');
       }
       const currentUserCount = room.users.filter((u) => u.isOnline).length;
       metrics.peakUsers = Math.max(metrics.peakUsers, currentUserCount);
       metrics.lastActivity = new Date();
+      
+      // Update peak users in Prometheus metrics
+      metricsService.setPeakUsersInRoom(roomCode, metrics.peakUsers);
     }
 
     // Enhanced user addition logging
@@ -340,6 +355,9 @@ class RoomService {
     if (metrics) {
       metrics.totalVotes++;
       metrics.lastActivity = new Date();
+      
+      // Track vote cast in Prometheus metrics
+      metricsService.incrementVotesCast(roomCode);
     }
 
     // Calculate voting progress and timing
@@ -380,6 +398,9 @@ class RoomService {
 
     room.votesRevealed = true;
     room.votingInProgress = false;
+
+    // Track vote reveal in Prometheus metrics
+    metricsService.incrementRoomLifecycleEvent('votes_revealed');
 
     // Compute vote statistics when revealing votes
     room.voteStatistics = this.computeVoteStatistics(room);
@@ -431,6 +452,9 @@ class RoomService {
     room.votingInProgress = true;
     room.votesRevealed = false;
     room.voteStatistics = undefined; // Clear previous statistics
+
+    // Track voting start in Prometheus metrics
+    metricsService.incrementRoomLifecycleEvent('voting_started');
 
     const metrics = this.roomMetrics.get(roomCode);
     if (metrics) {
@@ -682,7 +706,7 @@ class RoomService {
   }
 
   // Helper method to get total active users across all rooms
-  private getTotalActiveUsers(): number {
+  getTotalActiveUsers(): number {
     let totalUsers = 0;
     for (const room of this.rooms.values()) {
       totalUsers += room.users.filter((u) => u.isOnline).length;

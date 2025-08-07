@@ -3,6 +3,7 @@ import path from "path";
 import corsMiddleware from "@/middleware/cors";
 import securityMiddleware from "@/middleware/security";
 import logger from "@/utils/logger";
+import metricsService from "@/services/metricsService";
 
 const app = express();
 
@@ -42,6 +43,11 @@ app.use((req, res, next) => {
   // Use res.on('finish') instead of overriding res.end to avoid TypeScript issues
   res.on("finish", () => {
     const duration = Date.now() - startTime;
+    const durationSeconds = duration / 1000;
+
+    // Track HTTP metrics in Prometheus
+    metricsService.incrementHttpRequests(req.method, req.path, res.statusCode);
+    metricsService.observeHttpRequestDuration(req.method, req.path, durationSeconds);
 
     // Log request completion with performance metrics
     logger.logPerformance(
@@ -116,12 +122,16 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Serve static files from the frontend build
 app.use(express.static(path.join(__dirname, "../web/dist")));
 
-// Catch-all handler for React Router (SPA) - exclude API routes
-app.get(/^(?!\/api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "../web/dist/index.html"));
+// Fixed: Use proper catch-all middleware instead of wildcard route
+app.use((req, res) => {
+  // Only serve SPA for non-API routes and non-health routes
+  if (!req.path.startsWith('/api') && !req.path.startsWith('/health')) {
+    res.sendFile(path.join(__dirname, "../web/dist/index.html"));
+  } else {
+    res.status(404).json({ error: "Not found" });
+  }
 });
 
 export default app;

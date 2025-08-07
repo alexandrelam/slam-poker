@@ -10,6 +10,10 @@ interface Config {
     url: string;
     enabled: boolean;
   };
+  metrics: {
+    enabled: boolean;
+    port: number;
+  };
 }
 
 const config: Config = {
@@ -21,6 +25,10 @@ const config: Config = {
   loki: {
     url: process.env.LOKI_URL || "",
     enabled: process.env.LOKI_ENABLED === "true" && !!process.env.LOKI_URL,
+  },
+  metrics: {
+    enabled: process.env.METRICS_ENABLED !== "false", // Default to enabled
+    port: parseInt(process.env.METRICS_PORT || "9090", 10),
   },
 };
 
