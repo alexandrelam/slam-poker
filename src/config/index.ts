@@ -13,6 +13,7 @@ interface Config {
   metrics: {
     enabled: boolean;
     port: number;
+    prometheusUrl?: string;
   };
 }
 
@@ -29,6 +30,7 @@ const config: Config = {
   metrics: {
     enabled: process.env.METRICS_ENABLED !== "false", // Default to enabled
     port: parseInt(process.env.METRICS_PORT || "9090", 10),
+    prometheusUrl: process.env.PROMETHEUS_URL,
   },
 };
 

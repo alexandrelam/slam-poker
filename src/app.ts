@@ -47,7 +47,11 @@ app.use((req, res, next) => {
 
     // Track HTTP metrics in Prometheus
     metricsService.incrementHttpRequests(req.method, req.path, res.statusCode);
-    metricsService.observeHttpRequestDuration(req.method, req.path, durationSeconds);
+    metricsService.observeHttpRequestDuration(
+      req.method,
+      req.path,
+      durationSeconds,
+    );
 
     // Log request completion with performance metrics
     logger.logPerformance(
@@ -127,7 +131,7 @@ app.use(express.static(path.join(__dirname, "../web/dist")));
 // Fixed: Use proper catch-all middleware instead of wildcard route
 app.use((req, res) => {
   // Only serve SPA for non-API routes and non-health routes
-  if (!req.path.startsWith('/api') && !req.path.startsWith('/health')) {
+  if (!req.path.startsWith("/api") && !req.path.startsWith("/health")) {
     res.sendFile(path.join(__dirname, "../web/dist/index.html"));
   } else {
     res.status(404).json({ error: "Not found" });

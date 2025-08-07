@@ -53,26 +53,60 @@ export const handleSocketConnection = (socket: SocketType, io: any) => {
   );
 
   // Room-related events
-  socket.on("join-room", withMetrics("join-room", (data: any) => handleJoinRoom(socket, io, data)));
-  socket.on("update-room-settings", withMetrics("update-room-settings", (data: any) =>
-    handleUpdateRoomSettings(socket, io, data)
-  ));
+  socket.on(
+    "join-room",
+    withMetrics("join-room", (data: any) => handleJoinRoom(socket, io, data)),
+  );
+  socket.on(
+    "update-room-settings",
+    withMetrics("update-room-settings", (data: any) =>
+      handleUpdateRoomSettings(socket, io, data),
+    ),
+  );
 
   // Voting-related events
-  socket.on("vote", withMetrics("vote", (data: any) => handleVote(socket, io, data)));
-  socket.on("reveal-votes", withMetrics("reveal-votes", () => handleRevealVotes(socket, io)));
-  socket.on("next-round", withMetrics("next-round", () => handleNextRound(socket, io)));
+  socket.on(
+    "vote",
+    withMetrics("vote", (data: any) => handleVote(socket, io, data)),
+  );
+  socket.on(
+    "reveal-votes",
+    withMetrics("reveal-votes", () => handleRevealVotes(socket, io)),
+  );
+  socket.on(
+    "next-round",
+    withMetrics("next-round", () => handleNextRound(socket, io)),
+  );
 
   // Timer-related events
-  socket.on("start-timer", withMetrics("start-timer", () => handleStartTimer(socket, io)));
-  socket.on("reset-timer", withMetrics("reset-timer", () => handleResetTimer(socket, io)));
+  socket.on(
+    "start-timer",
+    withMetrics("start-timer", () => handleStartTimer(socket, io)),
+  );
+  socket.on(
+    "reset-timer",
+    withMetrics("reset-timer", () => handleResetTimer(socket, io)),
+  );
 
   // User management events
-  socket.on("kick-user", withMetrics("kick-user", (data: any) => handleKickUser(socket, io, data)));
-  socket.on("change-name", withMetrics("change-name", (data: any) => handleChangeName(socket, io, data)));
+  socket.on(
+    "kick-user",
+    withMetrics("kick-user", (data: any) => handleKickUser(socket, io, data)),
+  );
+  socket.on(
+    "change-name",
+    withMetrics("change-name", (data: any) =>
+      handleChangeName(socket, io, data),
+    ),
+  );
 
   // Emoji events
-  socket.on("emoji-spawn", withMetrics("emoji-spawn", (data: any) => handleEmojiSpawn(socket, io, data)));
+  socket.on(
+    "emoji-spawn",
+    withMetrics("emoji-spawn", (data: any) =>
+      handleEmojiSpawn(socket, io, data),
+    ),
+  );
 
   // Enhanced disconnect handler
   socket.on("disconnect", (reason) => {

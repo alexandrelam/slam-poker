@@ -33,12 +33,12 @@ const io = new Server<
 
 io.on("connection", (socket) => {
   logger.info("User connected", { socketId: socket.id });
-  metricsService.incrementWebsocketConnections('connect');
-  
-  socket.on('disconnect', () => {
-    metricsService.incrementWebsocketConnections('disconnect');
+  metricsService.incrementWebsocketConnections("connect");
+
+  socket.on("disconnect", () => {
+    metricsService.incrementWebsocketConnections("disconnect");
   });
-  
+
   handleSocketConnection(socket, io);
 });
 
@@ -54,7 +54,7 @@ setInterval(() => {
     const healthScore = errorTrackingService.getSystemHealthScore();
     const activeRooms = roomService.getRoomCount();
     const sessionStats = sessionTrackingService.getSessionStatistics();
-    
+
     logger.logBusinessMetric("System health check", {
       health_score: healthScore,
       status:

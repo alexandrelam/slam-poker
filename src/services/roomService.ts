@@ -57,7 +57,7 @@ class RoomService {
 
     // Track room creation in Prometheus metrics
     metricsService.incrementRoomsCreated();
-    metricsService.incrementRoomLifecycleEvent('created');
+    metricsService.incrementRoomLifecycleEvent("created");
 
     // Enhanced room creation logging
     logger.logSystemEvent(
@@ -138,7 +138,7 @@ class RoomService {
 
     // Track room creation in Prometheus metrics
     metricsService.incrementRoomsCreated();
-    metricsService.incrementRoomLifecycleEvent('created');
+    metricsService.incrementRoomLifecycleEvent("created");
 
     // Enhanced room creation logging
     logger.logSystemEvent(
@@ -186,12 +186,12 @@ class RoomService {
         metrics.totalJoins++;
         // Track user join in Prometheus metrics
         metricsService.incrementUserJoins();
-        metricsService.incrementRoomLifecycleEvent('joined');
+        metricsService.incrementRoomLifecycleEvent("joined");
       }
       const currentUserCount = room.users.filter((u) => u.isOnline).length;
       metrics.peakUsers = Math.max(metrics.peakUsers, currentUserCount);
       metrics.lastActivity = new Date();
-      
+
       // Update peak users in Prometheus metrics
       metricsService.setPeakUsersInRoom(roomCode, metrics.peakUsers);
     }
@@ -355,7 +355,7 @@ class RoomService {
     if (metrics) {
       metrics.totalVotes++;
       metrics.lastActivity = new Date();
-      
+
       // Track vote cast in Prometheus metrics
       metricsService.incrementVotesCast(roomCode);
     }
@@ -400,7 +400,7 @@ class RoomService {
     room.votingInProgress = false;
 
     // Track vote reveal in Prometheus metrics
-    metricsService.incrementRoomLifecycleEvent('votes_revealed');
+    metricsService.incrementRoomLifecycleEvent("votes_revealed");
 
     // Compute vote statistics when revealing votes
     room.voteStatistics = this.computeVoteStatistics(room);
@@ -454,7 +454,7 @@ class RoomService {
     room.voteStatistics = undefined; // Clear previous statistics
 
     // Track voting start in Prometheus metrics
-    metricsService.incrementRoomLifecycleEvent('voting_started');
+    metricsService.incrementRoomLifecycleEvent("voting_started");
 
     const metrics = this.roomMetrics.get(roomCode);
     if (metrics) {
