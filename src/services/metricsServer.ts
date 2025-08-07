@@ -14,6 +14,7 @@ class MetricsServer {
   }
 
   private setupRoutes(): void {
+
     // Health check endpoint for the metrics server
     this.app.get('/health', (req, res) => {
       res.json({
@@ -36,7 +37,7 @@ class MetricsServer {
     });
 
     // Catch-all for unsupported endpoints
-    this.app.use('*', (req, res) => {
+    this.app.use((req, res) => {
       res.status(404).json({
         error: 'Not found',
         message: 'Available endpoints: /health, /metrics',

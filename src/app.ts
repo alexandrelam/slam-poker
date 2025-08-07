@@ -122,12 +122,16 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Serve static files from the frontend build
 app.use(express.static(path.join(__dirname, "../web/dist")));
 
-// Catch-all handler for React Router (SPA) - exclude API routes
-app.get(/^(?!\/api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "../web/dist/index.html"));
+// Fixed: Use proper catch-all middleware instead of wildcard route
+app.use((req, res) => {
+  // Only serve SPA for non-API routes and non-health routes
+  if (!req.path.startsWith('/api') && !req.path.startsWith('/health')) {
+    res.sendFile(path.join(__dirname, "../web/dist/index.html"));
+  } else {
+    res.status(404).json({ error: "Not found" });
+  }
 });
 
 export default app;
