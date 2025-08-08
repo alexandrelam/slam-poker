@@ -6,9 +6,55 @@
   "timezone": "browser",
   "editable": true,
   "fiscalYearStartMonth": 0,
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "query": "label_values(slam_poker_process_resident_memory_bytes, instance)",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": "time"
+      }
+    ]
+  },
   "graphTooltip": 0,
   "hideControls": false,
-  "links": [],
+  "links": [
+    {
+      "title": "Overview",
+      "tooltip": "Main KPI dashboard",
+      "type": "dashboard",
+      "tags": ["slam-poker", "overview"],
+      "targetBlank": false
+    },
+    {
+      "title": "Performance",
+      "tooltip": "HTTP and WebSocket latency analysis",
+      "type": "dashboard",
+      "tags": ["slam-poker", "performance"],
+      "targetBlank": false
+    },
+    {
+      "title": "Room Analytics",
+      "tooltip": "View detailed room and voting analytics",
+      "type": "dashboard",
+      "tags": ["slam-poker", "rooms"],
+      "targetBlank": false
+    },
+    {
+      "title": "Alerts & SLA",
+      "tooltip": "SLA compliance and alert status",
+      "type": "dashboard",
+      "tags": ["slam-poker", "alerts"],
+      "targetBlank": false
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
@@ -35,14 +81,14 @@
           "unit": "decbytes",
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 512000000},
-              {"color": "red", "value": 1073741824}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 512000000 },
+              { "color": "red", "value": 1073741824 }
             ]
           }
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
     },
     {
       "id": 2,
@@ -70,14 +116,14 @@
           "min": 0,
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 60},
-              {"color": "red", "value": 80}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 60 },
+              { "color": "red", "value": 80 }
             ]
           }
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
     },
     {
       "id": 3,
@@ -98,14 +144,14 @@
           "unit": "s",
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 0.01},
-              {"color": "red", "value": 0.1}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.01 },
+              { "color": "red", "value": 0.1 }
             ]
           }
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
     },
     {
       "id": 4,
@@ -113,8 +159,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(slam_poker_errors_total[5m]) * 300",
-          "legendFormat": "{{error_category}}",
+          "expr": "rate(slam_poker_errors_total[5m])",
+          "legendFormat": "{{error_category}}/sec",
           "refId": "A"
         }
       ],
@@ -126,14 +172,14 @@
           "unit": "short",
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 1},
-              {"color": "red", "value": 5}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
             ]
           }
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
     },
     {
       "id": 5,
@@ -141,18 +187,18 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(slam_poker_http_requests_total{status_code=~\"2..\"}[5m]) * 300",
-          "legendFormat": "2xx Success",
+          "expr": "rate(slam_poker_http_requests_total{status_code=~\"2..\"}[5m])",
+          "legendFormat": "2xx Success/sec",
           "refId": "A"
         },
         {
-          "expr": "rate(slam_poker_http_requests_total{status_code=~\"4..\"}[5m]) * 300",
-          "legendFormat": "4xx Client Error",
+          "expr": "rate(slam_poker_http_requests_total{status_code=~\"4..\"}[5m])",
+          "legendFormat": "4xx Client Error/sec",
           "refId": "B"
         },
         {
-          "expr": "rate(slam_poker_http_requests_total{status_code=~\"5..\"}[5m]) * 300",
-          "legendFormat": "5xx Server Error",
+          "expr": "rate(slam_poker_http_requests_total{status_code=~\"5..\"}[5m])",
+          "legendFormat": "5xx Server Error/sec",
           "refId": "C"
         }
       ],
@@ -164,7 +210,7 @@
           "unit": "reqps"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
     },
     {
       "id": 6,
@@ -185,12 +231,12 @@
           "unit": "s"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
     }
   ],
   "refresh": "30s",
   "schemaVersion": 27,
-  "time": {"from": "now-1h", "to": "now"},
+  "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "",
   "version": 1

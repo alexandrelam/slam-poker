@@ -23,7 +23,7 @@
       },
       {
         "name": "room_code",
-        "type": "query", 
+        "type": "query",
         "query": "label_values(slam_poker_peak_users_in_room, room_code)",
         "current": {
           "selected": false,
@@ -49,7 +49,7 @@
     {
       "title": "Performance",
       "tooltip": "HTTP and WebSocket latency analysis",
-      "type": "dashboard", 
+      "type": "dashboard",
       "tags": ["slam-poker", "performance"],
       "targetBlank": false
     },
@@ -88,15 +88,15 @@
           },
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 100},
-              {"color": "red", "value": 250}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 100 },
+              { "color": "red", "value": 250 }
             ]
           },
           "unit": "short"
         }
       },
-      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -121,15 +121,15 @@
           },
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 500},
-              {"color": "red", "value": 1000}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 500 },
+              { "color": "red", "value": 1000 }
             ]
           },
           "unit": "short"
         }
       },
-      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 }
     },
     {
       "id": 3,
@@ -148,15 +148,15 @@
           },
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 200},
-              {"color": "red", "value": 500}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 200 },
+              { "color": "red", "value": 500 }
             ]
           },
           "unit": "short"
         }
       },
-      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 }
     },
     {
       "id": 4,
@@ -176,9 +176,9 @@
           },
           "thresholds": {
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 50},
-              {"color": "green", "value": 80}
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "green", "value": 80 }
             ]
           },
           "unit": "percent",
@@ -186,7 +186,7 @@
           "min": 0
         }
       },
-      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 }
     },
     {
       "id": 5,
@@ -207,7 +207,7 @@
           "unit": "short"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
       "options": {
         "legend": {
           "calcs": [],
@@ -235,7 +235,7 @@
           "unit": "short"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 }
     },
     {
       "id": 7,
@@ -261,7 +261,7 @@
           "unit": "short"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 }
     },
     {
       "id": 8,
@@ -282,7 +282,7 @@
           "unit": "reqps"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 }
     },
     {
       "id": 9,
@@ -303,12 +303,12 @@
           "unit": "short"
         }
       },
-      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 20}
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 20 }
     }
   ],
   "refresh": "30s",
   "schemaVersion": 27,
-  "time": {"from": "now-1h", "to": "now"},
+  "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "",
   "version": 1

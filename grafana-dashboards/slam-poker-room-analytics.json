@@ -6,9 +6,68 @@
   "timezone": "browser",
   "editable": true,
   "fiscalYearStartMonth": 0,
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "query": "label_values(slam_poker_peak_users_in_room, instance)",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": "time"
+      },
+      {
+        "name": "room_code",
+        "type": "query",
+        "query": "label_values(slam_poker_peak_users_in_room, room_code)",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": "time"
+      }
+    ]
+  },
   "graphTooltip": 0,
   "hideControls": false,
-  "links": [],
+  "links": [
+    {
+      "title": "Overview",
+      "tooltip": "Main KPI dashboard",
+      "type": "dashboard",
+      "tags": ["slam-poker", "overview"],
+      "targetBlank": false
+    },
+    {
+      "title": "Performance",
+      "tooltip": "HTTP and WebSocket latency analysis",
+      "type": "dashboard",
+      "tags": ["slam-poker", "performance"],
+      "targetBlank": false
+    },
+    {
+      "title": "System Health",
+      "tooltip": "Infrastructure and Node.js metrics",
+      "type": "dashboard",
+      "tags": ["slam-poker", "system"],
+      "targetBlank": false
+    },
+    {
+      "title": "Alerts & SLA",
+      "tooltip": "SLA compliance and alert status",
+      "type": "dashboard",
+      "tags": ["slam-poker", "alerts"],
+      "targetBlank": false
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
@@ -30,7 +89,7 @@
           "unit": "short"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "options": {
         "legend": {
           "calcs": [],
@@ -45,8 +104,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(slam_poker_votes_cast_total[5m]) * 300",
-          "legendFormat": "Room {{room_code}}",
+          "expr": "rate(slam_poker_votes_cast_total[5m])",
+          "legendFormat": "Room {{room_code}}/sec",
           "refId": "A"
         }
       ],
@@ -58,7 +117,7 @@
           "unit": "short"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
     },
     {
       "id": 3,
@@ -66,28 +125,28 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"created\"}[5m]) * 300",
-          "legendFormat": "Rooms Created",
+          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"created\"}[5m])",
+          "legendFormat": "Rooms Created/sec",
           "refId": "A"
         },
         {
-          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"joined\"}[5m]) * 300",
-          "legendFormat": "User Joins",
+          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"joined\"}[5m])",
+          "legendFormat": "User Joins/sec",
           "refId": "B"
         },
         {
-          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"left\"}[5m]) * 300",
-          "legendFormat": "User Leaves",
+          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"left\"}[5m])",
+          "legendFormat": "User Leaves/sec",
           "refId": "C"
         },
         {
-          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"voting_started\"}[5m]) * 300",
-          "legendFormat": "Voting Started",
+          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"voting_started\"}[5m])",
+          "legendFormat": "Voting Started/sec",
           "refId": "D"
         },
         {
-          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"votes_revealed\"}[5m]) * 300",
-          "legendFormat": "Votes Revealed",
+          "expr": "rate(slam_poker_room_lifecycle_events_total{event_type=\"votes_revealed\"}[5m])",
+          "legendFormat": "Votes Revealed/sec",
           "refId": "E"
         }
       ],
@@ -99,7 +158,7 @@
           "unit": "short"
         }
       },
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 }
     },
     {
       "id": 4,
@@ -120,7 +179,7 @@
           "unit": "s"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
     },
     {
       "id": 5,
@@ -156,7 +215,7 @@
           "unit": "s"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
     },
     {
       "id": 6,
@@ -178,19 +237,23 @@
           },
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 50},
-              {"color": "red", "value": 100}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 100 }
             ]
           }
         }
       },
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24},
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
       "transformations": [
         {
           "id": "organize",
           "options": {
-            "excludeByName": {"__name__": true, "instance": true, "job": true},
+            "excludeByName": {
+              "__name__": true,
+              "instance": true,
+              "job": true
+            },
             "renameByName": {
               "room_code": "Room Code",
               "Value": "Total Votes"
@@ -202,7 +265,7 @@
   ],
   "refresh": "30s",
   "schemaVersion": 27,
-  "time": {"from": "now-1h", "to": "now"},
+  "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "",
   "version": 1

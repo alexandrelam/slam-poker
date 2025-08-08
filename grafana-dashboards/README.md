@@ -5,7 +5,9 @@ This directory contains comprehensive Grafana dashboard JSON files for monitorin
 ## Dashboard Overview
 
 ### 1. Overview Dashboard (`slam-poker-overview.json`)
+
 **High-level KPIs and system overview**
+
 - Active rooms, users, and sessions
 - System health score
 - Room creation and user join rates
@@ -14,7 +16,9 @@ This directory contains comprehensive Grafana dashboard JSON files for monitorin
 - Error rate monitoring
 
 ### 2. Room Analytics Dashboard (`slam-poker-room-analytics.json`)
+
 **Room-specific metrics and user behavior**
+
 - Peak users by room
 - Votes cast per room
 - Room lifecycle events (created, joined, left, voting started, votes revealed)
@@ -22,7 +26,9 @@ This directory contains comprehensive Grafana dashboard JSON files for monitorin
 - Total votes cast by room (table view)
 
 ### 3. Performance Dashboard (`slam-poker-performance.json`)
+
 **Latency and performance metrics**
+
 - HTTP request duration percentiles (50th, 90th, 95th, 99th)
 - WebSocket event processing duration
 - Session duration analysis
@@ -30,7 +36,9 @@ This directory contains comprehensive Grafana dashboard JSON files for monitorin
 - Performance heatmaps
 
 ### 4. System Health Dashboard (`slam-poker-system-health.json`)
+
 **Infrastructure and Node.js system metrics**
+
 - Memory usage (resident, heap, external heap)
 - CPU usage (user, system)
 - Event loop lag
@@ -40,7 +48,9 @@ This directory contains comprehensive Grafana dashboard JSON files for monitorin
 - File descriptors and process uptime
 
 ### 5. Alerts & SLA Dashboard (`slam-poker-alerts-sla.json`)
+
 **SLA monitoring and alerting**
+
 - HTTP success rate (SLA: 99.9%)
 - Average response time (SLA: <100ms)
 - Error rate (SLA: <0.1%)
@@ -59,6 +69,7 @@ This directory contains comprehensive Grafana dashboard JSON files for monitorin
 ## Importing Dashboards
 
 ### Method 1: Grafana UI
+
 1. Open Grafana web interface
 2. Navigate to **"+"** → **"Import"**
 3. Click **"Upload JSON file"** or paste the JSON content
@@ -66,6 +77,7 @@ This directory contains comprehensive Grafana dashboard JSON files for monitorin
 5. Click **"Import"**
 
 ### Method 2: Grafana API
+
 ```bash
 # Example for Overview dashboard
 curl -X POST \
@@ -76,6 +88,7 @@ curl -X POST \
 ```
 
 ### Method 3: Grafana CLI (if you have file access)
+
 ```bash
 # Copy dashboards to Grafana provisioning directory
 sudo cp *.json /etc/grafana/provisioning/dashboards/
@@ -88,16 +101,17 @@ Ensure your `prometheus.yml` includes a scrape config for SLAM Poker:
 
 ```yaml
 scrape_configs:
-  - job_name: 'slam-poker'
+  - job_name: "slam-poker"
     static_configs:
-      - targets: ['localhost:3001']  # Your app's host:port
-    metrics_path: '/metrics'
+      - targets: ["localhost:3001"] # Your app's host:port
+    metrics_path: "/metrics"
     scrape_interval: 15s
 ```
 
 ## Key Metrics Tracked
 
 ### Gauges (Current State)
+
 - `slam_poker_active_rooms` - Currently active rooms
 - `slam_poker_active_users` - Currently active users
 - `slam_poker_active_sessions` - Currently active sessions
@@ -105,6 +119,7 @@ scrape_configs:
 - `slam_poker_peak_users_in_room{room_code}` - Peak users per room
 
 ### Counters (Totals)
+
 - `slam_poker_rooms_created_total` - Total rooms created
 - `slam_poker_user_joins_total` - Total user joins
 - `slam_poker_votes_cast_total{room_code}` - Total votes cast
@@ -113,12 +128,14 @@ scrape_configs:
 - `slam_poker_errors_total{error_category}` - Application errors
 
 ### Histograms (Distributions)
+
 - `slam_poker_http_request_duration_seconds` - HTTP latency
 - `slam_poker_websocket_event_duration_seconds` - WebSocket processing time
 - `slam_poker_session_duration_seconds` - User session duration
 - `slam_poker_voting_round_duration_seconds` - Voting round duration
 
 ### Node.js System Metrics (prefixed with `slam_poker_`)
+
 - Process memory usage
 - CPU utilization
 - Event loop lag
@@ -161,6 +178,7 @@ groups:
 ## Dashboard Variables
 
 Some dashboards support template variables for filtering:
+
 - `$room_code` - Filter by specific room code
 - `$interval` - Adjustable time interval for rate calculations
 - `$percentile` - Select which percentile to display
@@ -168,6 +186,7 @@ Some dashboards support template variables for filtering:
 ## Customization
 
 Each dashboard can be customized:
+
 - **Thresholds**: Adjust warning/critical thresholds in panel settings
 - **Time ranges**: Modify default time ranges
 - **Refresh rates**: Adjust auto-refresh intervals
@@ -176,17 +195,21 @@ Each dashboard can be customized:
 ## Troubleshooting
 
 ### No Data Showing
+
 1. Verify Prometheus is scraping your application
 2. Check that metrics endpoint (`/metrics`) is accessible
 3. Ensure data source configuration in Grafana is correct
 
 ### High Cardinality Warnings
+
 If you have many rooms, consider:
+
 - Adding recording rules for high-cardinality metrics
 - Using label aggregation in queries
 - Setting up metric retention policies
 
 ### Performance Issues
+
 - Use recording rules for complex queries
 - Reduce query ranges for heavy dashboards
 - Consider downsampling for historical data

@@ -6,9 +6,55 @@
   "timezone": "browser",
   "editable": true,
   "fiscalYearStartMonth": 0,
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "query": "label_values(slam_poker_http_requests_total, instance)",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": "time"
+      }
+    ]
+  },
   "graphTooltip": 0,
   "hideControls": false,
-  "links": [],
+  "links": [
+    {
+      "title": "Overview",
+      "tooltip": "Main KPI dashboard",
+      "type": "dashboard",
+      "tags": ["slam-poker", "overview"],
+      "targetBlank": false
+    },
+    {
+      "title": "System Health",
+      "tooltip": "Infrastructure and Node.js metrics",
+      "type": "dashboard",
+      "tags": ["slam-poker", "system"],
+      "targetBlank": false
+    },
+    {
+      "title": "Performance",
+      "tooltip": "HTTP and WebSocket latency analysis",
+      "type": "dashboard",
+      "tags": ["slam-poker", "performance"],
+      "targetBlank": false
+    },
+    {
+      "title": "Room Analytics",
+      "tooltip": "View detailed room and voting analytics",
+      "type": "dashboard",
+      "tags": ["slam-poker", "rooms"],
+      "targetBlank": false
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
@@ -28,9 +74,9 @@
           },
           "thresholds": {
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 99},
-              {"color": "green", "value": 99.9}
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 99 },
+              { "color": "green", "value": 99.9 }
             ]
           },
           "unit": "percent",
@@ -38,7 +84,7 @@
           "min": 95
         }
       },
-      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 }
     },
     {
       "id": 2,
@@ -57,15 +103,15 @@
           },
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 100},
-              {"color": "red", "value": 500}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 100 },
+              { "color": "red", "value": 500 }
             ]
           },
           "unit": "ms"
         }
       },
-      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 }
     },
     {
       "id": 3,
@@ -84,9 +130,9 @@
           },
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 0.1},
-              {"color": "red", "value": 1}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.1 },
+              { "color": "red", "value": 1 }
             ]
           },
           "unit": "percent",
@@ -94,7 +140,7 @@
           "min": 0
         }
       },
-      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 }
     },
     {
       "id": 4,
@@ -113,9 +159,9 @@
           },
           "thresholds": {
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 70},
-              {"color": "green", "value": 90}
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "green", "value": 90 }
             ]
           },
           "unit": "percent",
@@ -123,7 +169,7 @@
           "min": 0
         }
       },
-      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 }
     },
     {
       "id": 5,
@@ -159,7 +205,7 @@
           "unit": "short"
         }
       },
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 4}
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 }
     },
     {
       "id": 6,
@@ -187,19 +233,19 @@
           "min": 98,
           "thresholds": {
             "steps": [
-              {"color": "red", "value": null},
-              {"color": "yellow", "value": 99},
-              {"color": "green", "value": 99.9}
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 99 },
+              { "color": "green", "value": 99.9 }
             ]
           }
         }
       },
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12}
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 }
     }
   ],
   "refresh": "30s",
   "schemaVersion": 27,
-  "time": {"from": "now-1h", "to": "now"},
+  "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "",
   "version": 1

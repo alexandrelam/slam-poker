@@ -6,9 +6,55 @@
   "timezone": "browser",
   "editable": true,
   "fiscalYearStartMonth": 0,
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "query": "label_values(slam_poker_http_requests_total, instance)",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": "time"
+      }
+    ]
+  },
   "graphTooltip": 0,
   "hideControls": false,
-  "links": [],
+  "links": [
+    {
+      "title": "Overview",
+      "tooltip": "Main KPI dashboard",
+      "type": "dashboard",
+      "tags": ["slam-poker", "overview"],
+      "targetBlank": false
+    },
+    {
+      "title": "System Health",
+      "tooltip": "Infrastructure and Node.js metrics",
+      "type": "dashboard",
+      "tags": ["slam-poker", "system"],
+      "targetBlank": false
+    },
+    {
+      "title": "Room Analytics",
+      "tooltip": "View detailed room and voting analytics",
+      "type": "dashboard",
+      "tags": ["slam-poker", "rooms"],
+      "targetBlank": false
+    },
+    {
+      "title": "Alerts & SLA",
+      "tooltip": "SLA compliance and alert status",
+      "type": "dashboard",
+      "tags": ["slam-poker", "alerts"],
+      "targetBlank": false
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
@@ -45,14 +91,14 @@
           "unit": "s",
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 0.1},
-              {"color": "red", "value": 0.5}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.1 },
+              { "color": "red", "value": 0.5 }
             ]
           }
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
     },
     {
       "id": 2,
@@ -88,14 +134,14 @@
           "unit": "s",
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 0.05},
-              {"color": "red", "value": 0.1}
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.05 },
+              { "color": "red", "value": 0.1 }
             ]
           }
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
     },
     {
       "id": 3,
@@ -126,7 +172,7 @@
           "unit": "s"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
     },
     {
       "id": 4,
@@ -147,7 +193,7 @@
           "unit": "reqps"
         }
       },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
     },
     {
       "id": 5,
@@ -168,12 +214,12 @@
           "unit": "ops"
         }
       },
-      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 16}
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 16 }
     }
   ],
   "refresh": "30s",
   "schemaVersion": 27,
-  "time": {"from": "now-1h", "to": "now"},
+  "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "",
   "version": 1
